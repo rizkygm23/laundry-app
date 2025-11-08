@@ -13,9 +13,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { CheckCircle2 } from 'lucide-react';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Layanan {
   id: string;
@@ -27,6 +29,7 @@ interface Layanan {
 
 export default function CreateTransaksi() {
   const router = useRouter();
+  const { user } = useAuth();
   const [layananList, setLayananList] = useState<Layanan[]>([]);
   const [selectedLayanan, setSelectedLayanan] = useState<Layanan | null>(null);
   const [formData, setFormData] = useState({
@@ -39,6 +42,83 @@ export default function CreateTransaksi() {
   useEffect(() => {
     loadLayanan();
   }, []);
+
+  // Auto-fill pelanggan ketika nomor HP diisi
+  useEffect(() => {
+    const fetchPelanggan = async () => {
+      const nomorHp = formData.nomor_hp.trim();
+      
+      // Hanya cek jika nomor HP sudah cukup panjang (minimal 10 digit)
+      if (nomorHp.length < 10) {
+        // Reset form jika nomor HP terlalu pendek
+        if (formData.nama_pelanggan || formData.alamat) {
+          setFormData(prev => ({
+            ...prev,
+            nama_pelanggan: '',
+            alamat: '',
+          }));
+        }
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('pelanggan')
+          .select('nama, alamat')
+          .eq('nomor_hp', nomorHp)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error fetching pelanggan:', error);
+          return;
+        }
+
+        if (data) {
+          // Pelanggan ditemukan, auto-fill nama dan alamat
+          setFormData(prev => {
+            // Hanya update jika berbeda untuk menghindari loop
+            const shouldUpdate = prev.nama_pelanggan !== data.nama || prev.alamat !== (data.alamat || '');
+            if (shouldUpdate) {
+              // Hanya show toast jika ini update pertama kali (nama sebelumnya kosong)
+              if (!prev.nama_pelanggan) {
+                toast.success(`Pelanggan ditemukan: ${data.nama}`);
+              }
+              return {
+                ...prev,
+                nama_pelanggan: data.nama,
+                alamat: data.alamat || '',
+              };
+            }
+            return prev;
+          });
+        } else {
+          // Pelanggan tidak ditemukan, clear nama dan alamat
+          setFormData(prev => {
+            // Hanya reset jika sebelumnya ada data (untuk menghindari reset saat user sedang mengetik)
+            if (prev.nama_pelanggan || prev.alamat) {
+              // Hanya clear jika nomor HP benar-benar berbeda (bukan karena sedang diketik)
+              return {
+                ...prev,
+                nama_pelanggan: '',
+                alamat: '',
+              };
+            }
+            return prev;
+          });
+        }
+      } catch (err) {
+        console.error('Error fetching pelanggan:', err);
+      }
+    };
+
+    // Debounce untuk menghindari terlalu banyak request
+    const timer = setTimeout(() => {
+      fetchPelanggan();
+    }, 800);
+
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.nomor_hp]);
 
   const loadLayanan = async () => {
     const { data } = await supabase
@@ -69,53 +149,81 @@ export default function CreateTransaksi() {
     e.preventDefault();
 
     if (!selectedLayanan) {
-      alert('Pilih layanan terlebih dahulu');
+      toast.error('Pilih layanan terlebih dahulu');
       return;
     }
 
-    const jumlah = parseInt(formData.jumlah);
-    const total = selectedLayanan.harga * jumlah;
-    const kodeStruk = generateKodeStruk();
+    try {
+      const jumlah = parseInt(formData.jumlah);
+      const total = selectedLayanan.harga * jumlah;
+      const kodeStruk = generateKodeStruk();
 
-    const deadline = new Date();
-    deadline.setHours(deadline.getHours() + selectedLayanan.durasi_pengerjaan_jam);
+      const deadline = new Date();
+      deadline.setHours(deadline.getHours() + selectedLayanan.durasi_pengerjaan_jam);
 
-    let pelangganId = null;
-    const { data: existingPelanggan } = await supabase
-      .from('pelanggan')
-      .select('id')
-      .eq('nomor_hp', formData.nomor_hp)
-      .maybeSingle();
-
-    if (existingPelanggan) {
-      pelangganId = existingPelanggan.id;
-      await supabase
+      let pelangganId = null;
+      
+      // Cek apakah pelanggan sudah ada berdasarkan nomor HP
+      const { data: existingPelanggan, error: errorPelangganCek } = await supabase
         .from('pelanggan')
-        .update({
-          nama: formData.nama_pelanggan,
-          alamat: formData.alamat,
-        })
-        .eq('id', pelangganId);
-    } else {
-      const { data: newPelanggan } = await supabase
-        .from('pelanggan')
-        .insert([{
-          nama: formData.nama_pelanggan,
-          nomor_hp: formData.nomor_hp,
-          alamat: formData.alamat,
-        }])
-        .select()
-        .single();
+        .select('id, nama, alamat')
+        .eq('nomor_hp', formData.nomor_hp.trim())
+        .maybeSingle();
 
-      if (newPelanggan) {
-        pelangganId = newPelanggan.id;
+      if (errorPelangganCek) {
+        console.error('Error checking pelanggan:', errorPelangganCek);
+        toast.error('Gagal mengecek data pelanggan: ' + errorPelangganCek.message);
+        return;
       }
-    }
 
-    const transaksiData = {
+      if (existingPelanggan) {
+        // Pelanggan sudah ada, update data jika ada perubahan
+        pelangganId = existingPelanggan.id;
+        
+        // Update jika nama atau alamat berbeda
+        if (existingPelanggan.nama !== formData.nama_pelanggan || 
+            (existingPelanggan.alamat || '') !== formData.alamat) {
+          const { error: errorUpdatePelanggan } = await supabase
+            .from('pelanggan')
+            .update({
+              nama: formData.nama_pelanggan,
+              alamat: formData.alamat,
+            })
+            .eq('id', pelangganId);
+
+          if (errorUpdatePelanggan) {
+            console.error('Error updating pelanggan:', errorUpdatePelanggan);
+            toast.error('Gagal memperbarui data pelanggan: ' + errorUpdatePelanggan.message);
+            return;
+          }
+        }
+      } else {
+        // Pelanggan belum ada, buat baru
+        const { data: newPelanggan, error: errorInsertPelanggan } = await supabase
+          .from('pelanggan')
+          .insert([{
+            nama: formData.nama_pelanggan,
+            nomor_hp: formData.nomor_hp.trim(),
+            alamat: formData.alamat,
+          }])
+          .select()
+          .single();
+
+        if (errorInsertPelanggan) {
+          console.error('Error inserting pelanggan:', errorInsertPelanggan);
+          toast.error('Gagal menambahkan pelanggan: ' + errorInsertPelanggan.message);
+          return;
+        }
+
+        if (newPelanggan) {
+          pelangganId = newPelanggan.id;
+        }
+      }
+
+      const transaksiData = {
       kode_struk: kodeStruk,
       id_pelanggan: pelangganId,
-      id_users: null,
+      id_users: user?.id || null,
       id_layanan: selectedLayanan.id,
       nama_layanan: selectedLayanan.nama,
       nama_pelanggan: formData.nama_pelanggan,
@@ -128,30 +236,28 @@ export default function CreateTransaksi() {
       deadline: deadline.toISOString(),
     };
 
-    const { data, error } = await supabase
-      .from('transaksi')
-      .insert([transaksiData])
-      .select()
-      .single();
+      const { data, error } = await supabase
+        .from('transaksi')
+        .insert([transaksiData])
+        .select()
+        .single();
 
-    if (error) {
-      alert('Gagal membuat transaksi: ' + error.message);
-    } else {
-      router.push(`/struk/${kodeStruk}`);
+      if (error) {
+        console.error('Error inserting transaksi:', error);
+        toast.error('Gagal membuat transaksi: ' + error.message);
+      } else {
+        toast.success('Transaksi berhasil dibuat!');
+        router.push(`/struk/${kodeStruk}`);
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      toast.error('Terjadi kesalahan: ' + (err instanceof Error ? err.message : 'Unknown error'));
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 py-8">
-      <div className="container mx-auto px-4 max-w-2xl">
-        <Button
-          variant="ghost"
-          onClick={() => router.push('/')}
-          className="mb-6"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Kembali
-        </Button>
+    <DashboardLayout>
+      <div className="max-w-3xl mx-auto">
 
         <Card className="shadow-xl">
           <CardHeader className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white">
@@ -169,7 +275,7 @@ export default function CreateTransaksi() {
                     <SelectContent>
                       {layananList.map((layanan) => (
                         <SelectItem key={layanan.id} value={layanan.id}>
-                          {layanan.nama} - Rp {layanan.harga.toLocaleString('id-ID')} ({layanan.jenis_layanan})
+                          {layanan.nama} - Rp {layanan.harga.toLocaleString('id-ID')} ({layanan.jenis_layanan}) • {layanan.durasi_pengerjaan_jam} jam
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -223,27 +329,53 @@ export default function CreateTransaksi() {
 
                   <div className="space-y-4">
                     <div>
+                      <Label htmlFor="nomor_hp">Nomor WhatsApp *</Label>
+                      <div className="relative mt-2">
+                        <Input
+                          id="nomor_hp"
+                          type="tel"
+                          value={formData.nomor_hp}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, ''); // Hanya angka
+                            setFormData({ ...formData, nomor_hp: value });
+                          }}
+                          required
+                          placeholder="08123456789"
+                          className="pr-10"
+                        />
+                        {formData.nama_pelanggan && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
+                            <CheckCircle2 className="h-5 w-5" />
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Masukkan nomor WhatsApp untuk mengecek apakah pelanggan sudah terdaftar
+                      </p>
+                      {formData.nama_pelanggan && (
+                        <p className="text-xs text-green-600 mt-1 flex items-center gap-1 font-medium">
+                          <CheckCircle2 className="h-3 w-3" />
+                          Pelanggan ditemukan: {formData.nama_pelanggan}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
                       <Label htmlFor="nama_pelanggan">Nama Pelanggan *</Label>
                       <Input
                         id="nama_pelanggan"
                         value={formData.nama_pelanggan}
                         onChange={(e) => setFormData({ ...formData, nama_pelanggan: e.target.value })}
                         required
-                        placeholder="Nama lengkap pelanggan"
+                        placeholder="Nama akan terisi otomatis jika pelanggan sudah terdaftar"
                         className="mt-2"
                       />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="nomor_hp">Nomor WhatsApp *</Label>
-                      <Input
-                        id="nomor_hp"
-                        value={formData.nomor_hp}
-                        onChange={(e) => setFormData({ ...formData, nomor_hp: e.target.value })}
-                        required
-                        placeholder="08123456789"
-                        className="mt-2"
-                      />
+                      {formData.nama_pelanggan && formData.nomor_hp.length >= 10 && (
+                        <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3" />
+                          Nama diisi otomatis dari database. Anda bisa mengedit jika perlu.
+                        </p>
+                      )}
                     </div>
 
                     <div>
@@ -252,9 +384,15 @@ export default function CreateTransaksi() {
                         id="alamat"
                         value={formData.alamat}
                         onChange={(e) => setFormData({ ...formData, alamat: e.target.value })}
-                        placeholder="Alamat lengkap (opsional)"
+                        placeholder="Alamat akan terisi otomatis jika pelanggan sudah terdaftar"
                         className="mt-2"
                       />
+                      {formData.alamat && formData.nomor_hp.length >= 10 && (
+                        <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3" />
+                          Alamat diisi otomatis dari database. Anda bisa mengedit jika perlu.
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -280,6 +418,6 @@ export default function CreateTransaksi() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

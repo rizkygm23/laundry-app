@@ -2,11 +2,65 @@
 
 ## 1. Setup Database Supabase
 
-Jalankan SQL berikut di Supabase SQL Editor:
+### ⚠️ PENTING: Setup Database Wajib Dilakukan!
 
-File: `supabase/migrations/create_laundry_schema.sql`
+**Jika Anda mendapatkan error "Could not find the table 'public.layanan' in the schema cache"**, berarti tabel belum dibuat di database Supabase. Ikuti langkah-langkah berikut:
 
-Atau copy-paste SQL tersebut ke Supabase Dashboard > SQL Editor dan jalankan.
+### 🚀 Cara Setup Database (CARA TERMUDAH)
+
+**Opsi 1: Setup Lengkap Sekali Jalankan (RECOMMENDED)**
+
+1. Buka **Supabase Dashboard** → **SQL Editor**
+2. Buka file `supabase/migrations/setup_complete.sql` di project Anda
+3. **Copy SEMUA isi file** tersebut (Ctrl+A, Ctrl+C)
+4. **Paste ke SQL Editor** di Supabase (Ctrl+V)
+5. Klik tombol **"Run"** atau tekan **Ctrl+Enter**
+6. Pastikan muncul pesan **"Success. No rows returned"** (tidak ada error)
+7. Selesai! Tabel sudah dibuat dan siap digunakan
+
+### ✅ Verifikasi Setup (Optional tapi Recommended)
+
+Setelah menjalankan setup, verifikasi dengan:
+
+1. Buka **Supabase Dashboard** → **SQL Editor**
+2. Buka file `supabase/migrations/verify_tables.sql`
+3. **Copy semua isi file** dan paste ke SQL Editor
+4. Klik **"Run"**
+5. Pastikan semua tabel menunjukkan **"✓ ADA"**
+
+### 📋 Opsi 2: Setup Manual (2 Langkah)
+
+Jika ingin menjalankan step by step:
+
+**Langkah 1: Buat Tabel**
+1. Buka file `supabase/migrations/create_laundry_schema.sql`
+2. Copy semua isi dan jalankan di Supabase SQL Editor
+
+**Langkah 2: Fix RLS Policies**
+1. Buka file `supabase/migrations/fix_anon_policies.sql`
+2. Copy semua isi dan jalankan di Supabase SQL Editor
+
+### 🔧 Troubleshooting
+
+**Error: "Could not find the table 'public.layanan'"**
+- ✅ Pastikan sudah menjalankan `setup_complete.sql`
+- ✅ Pastikan tidak ada error saat menjalankan SQL
+- ✅ Cek di Supabase Dashboard > Table Editor, pastikan tabel `layanan`, `pelanggan`, dan `transaksi` ada
+
+**Error: "new row violates row-level security policy"**
+- ✅ Pastikan sudah menjalankan `fix_anon_policies.sql` atau `setup_complete.sql`
+- ✅ Pastikan RLS policies sudah dibuat dengan benar
+
+**Data tidak tersimpan**
+- ✅ Cek browser console (F12) untuk melihat error detail
+- ✅ Pastikan environment variables `NEXT_PUBLIC_SUPABASE_URL` dan `NEXT_PUBLIC_SUPABASE_ANON_KEY` sudah di-set
+- ✅ Pastikan RLS policies sudah diupdate untuk anon users
+
+### 📝 Catatan Penting
+
+- Aplikasi ini **TIDAK menggunakan autentikasi Supabase**, jadi perlu mengizinkan anon users untuk melakukan operasi CRUD
+- File `setup_complete.sql` sudah include semua yang diperlukan (tabel + policies + indexes)
+- File ini aman untuk dijalankan berulang kali (menggunakan `IF NOT EXISTS` dan `DROP POLICY IF EXISTS`)
 
 ## 2. Fitur Aplikasi
 

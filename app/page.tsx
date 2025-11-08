@@ -4,12 +4,11 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Package, Users, CreditCard, Settings } from 'lucide-react';
 import Link from 'next/link';
 import TransaksiList from '@/components/transaksi/transaksi-list';
-import LayananList from '@/components/layanan/layanan-list';
-import PelangganList from '@/components/pelanggan/pelanggan-list';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { TransaksiSearch } from '@/components/transaksi/TransaksiSearch';
 
 export default function Home() {
   const [stats, setStats] = useState({
@@ -18,10 +17,22 @@ export default function Home() {
     transaksiProses: 0,
     transaksiSelesai: 0,
   });
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchType, setSearchType] = useState<'nama' | 'kode' | 'qr'>('nama');
 
   useEffect(() => {
     loadStats();
   }, []);
+
+  const handleSearch = (query: string, type: 'nama' | 'kode' | 'qr') => {
+    setSearchQuery(query);
+    setSearchType(type);
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setSearchType('nama');
+  };
 
   const loadStats = async () => {
     const { data: transaksiData } = await supabase
@@ -39,14 +50,24 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Laundry Management</h1>
-          <p className="text-gray-600">Kelola bisnis laundry Anda dengan mudah</p>
+    <DashboardLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+            <p className="text-gray-600 mt-1">Kelola transaksi laundry Anda</p>
+          </div>
+          <Link href="/transaksi/create">
+            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Plus className="mr-2 h-4 w-4" />
+              Transaksi Baru
+            </Button>
+          </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card className="bg-white border-blue-200 shadow-lg hover:shadow-xl transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-gray-600">Total Transaksi</CardTitle>
@@ -88,47 +109,21 @@ export default function Home() {
           </Card>
         </div>
 
+        {/* Transactions List */}
         <Card className="bg-white shadow-xl">
           <CardHeader className="border-b">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-2xl font-bold text-gray-900">Manajemen Laundry</CardTitle>
-              <Link href="/transaksi/create">
-                <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Transaksi Baru
-                </Button>
-              </Link>
-            </div>
+            <CardTitle className="text-2xl font-bold text-gray-900">Daftar Transaksi</CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <Tabs defaultValue="transaksi" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 mb-6 bg-gray-100">
-                <TabsTrigger value="transaksi" className="data-[state=active]:bg-white">
-                  Transaksi
-                </TabsTrigger>
-                <TabsTrigger value="layanan" className="data-[state=active]:bg-white">
-                  Layanan
-                </TabsTrigger>
-                <TabsTrigger value="pelanggan" className="data-[state=active]:bg-white">
-                  Pelanggan
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="transaksi" className="mt-0">
-                <TransaksiList onUpdate={loadStats} />
-              </TabsContent>
-
-              <TabsContent value="layanan" className="mt-0">
-                <LayananList />
-              </TabsContent>
-
-              <TabsContent value="pelanggan" className="mt-0">
-                <PelangganList />
-              </TabsContent>
-            </Tabs>
+            <TransaksiSearch onSearch={handleSearch} onClear={handleClearSearch} />
+            <TransaksiList
+              onUpdate={loadStats}
+              searchQuery={searchQuery}
+              searchType={searchType}
+            />
           </CardContent>
         </Card>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

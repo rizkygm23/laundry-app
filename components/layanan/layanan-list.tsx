@@ -67,22 +67,36 @@ export default function LayananList() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const layananData = {
-      nama: formData.nama,
-      jenis_layanan: formData.jenis_layanan,
-      harga: parseInt(formData.harga),
-      durasi_pengerjaan_jam: parseInt(formData.durasi_pengerjaan_jam),
-    };
+    try {
+      const layananData = {
+        nama: formData.nama,
+        jenis_layanan: formData.jenis_layanan,
+        harga: parseInt(formData.harga),
+        durasi_pengerjaan_jam: parseInt(formData.durasi_pengerjaan_jam),
+      };
 
-    if (editingId) {
-      await supabase.from('layanan').update(layananData).eq('id', editingId);
-    } else {
-      await supabase.from('layanan').insert([layananData]);
+      let error;
+      if (editingId) {
+        const result = await supabase.from('layanan').update(layananData).eq('id', editingId);
+        error = result.error;
+      } else {
+        const result = await supabase.from('layanan').insert([layananData]);
+        error = result.error;
+      }
+
+      if (error) {
+        console.error('Error saving layanan:', error);
+        alert('Gagal menyimpan layanan: ' + error.message);
+        return;
+      }
+
+      setIsOpen(false);
+      resetForm();
+      loadLayanan();
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      alert('Terjadi kesalahan: ' + (err instanceof Error ? err.message : 'Unknown error'));
     }
-
-    setIsOpen(false);
-    resetForm();
-    loadLayanan();
   };
 
   const handleEdit = (layanan: Layanan) => {
@@ -98,8 +112,18 @@ export default function LayananList() {
 
   const handleDelete = async (id: string) => {
     if (confirm('Apakah Anda yakin ingin menghapus layanan ini?')) {
-      await supabase.from('layanan').delete().eq('id', id);
-      loadLayanan();
+      try {
+        const { error } = await supabase.from('layanan').delete().eq('id', id);
+        if (error) {
+          console.error('Error deleting layanan:', error);
+          alert('Gagal menghapus layanan: ' + error.message);
+          return;
+        }
+        loadLayanan();
+      } catch (err) {
+        console.error('Unexpected error:', err);
+        alert('Terjadi kesalahan: ' + (err instanceof Error ? err.message : 'Unknown error'));
+      }
     }
   };
 

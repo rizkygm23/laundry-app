@@ -57,15 +57,29 @@ export default function PelangganList() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (editingId) {
-      await supabase.from('pelanggan').update(formData).eq('id', editingId);
-    } else {
-      await supabase.from('pelanggan').insert([formData]);
-    }
+    try {
+      let error;
+      if (editingId) {
+        const result = await supabase.from('pelanggan').update(formData).eq('id', editingId);
+        error = result.error;
+      } else {
+        const result = await supabase.from('pelanggan').insert([formData]);
+        error = result.error;
+      }
 
-    setIsOpen(false);
-    resetForm();
-    loadPelanggan();
+      if (error) {
+        console.error('Error saving pelanggan:', error);
+        alert('Gagal menyimpan pelanggan: ' + error.message);
+        return;
+      }
+
+      setIsOpen(false);
+      resetForm();
+      loadPelanggan();
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      alert('Terjadi kesalahan: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    }
   };
 
   const handleEdit = (pelanggan: Pelanggan) => {
@@ -80,8 +94,18 @@ export default function PelangganList() {
 
   const handleDelete = async (id: string) => {
     if (confirm('Apakah Anda yakin ingin menghapus pelanggan ini?')) {
-      await supabase.from('pelanggan').delete().eq('id', id);
-      loadPelanggan();
+      try {
+        const { error } = await supabase.from('pelanggan').delete().eq('id', id);
+        if (error) {
+          console.error('Error deleting pelanggan:', error);
+          alert('Gagal menghapus pelanggan: ' + error.message);
+          return;
+        }
+        loadPelanggan();
+      } catch (err) {
+        console.error('Unexpected error:', err);
+        alert('Terjadi kesalahan: ' + (err instanceof Error ? err.message : 'Unknown error'));
+      }
     }
   };
 

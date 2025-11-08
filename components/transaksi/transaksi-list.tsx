@@ -23,8 +23,9 @@ import { format } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { QRScanActions } from './QRScanActions';
 
-interface Transaksi {
+export interface Transaksi {
   id: string;
   kode_struk: string;
   nama_pelanggan: string;
@@ -39,63 +40,118 @@ interface Transaksi {
 
 interface TransaksiListProps {
   onUpdate?: () => void;
+  searchQuery?: string;
+  searchType?: 'nama' | 'kode' | 'qr';
 }
 
-export default function TransaksiList({ onUpdate }: TransaksiListProps) {
+export default function TransaksiList({ onUpdate, searchQuery, searchType }: TransaksiListProps) {
   const router = useRouter();
   const [transaksiList, setTransaksiList] = useState<Transaksi[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTransaksi, setSelectedTransaksi] = useState<Transaksi | null>(null);
 
   useEffect(() => {
     loadTransaksi();
-  }, []);
+  }, [searchQuery, searchType]);
 
   const loadTransaksi = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('transaksi')
-      .select('*')
-      .order('created_at', { ascending: false });
+    try {
+      let query = supabase.from('transaksi').select('*');
 
-    if (data) {
-      setTransaksiList(data);
+      if (searchQuery && searchType) {
+        if (searchType === 'nama') {
+          query = query.ilike('nama_pelanggan', `%${searchQuery}%`);
+        } else if (searchType === 'kode' || searchType === 'qr') {
+          query = query.ilike('kode_struk', `%${searchQuery}%`);
+        }
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading transaksi:', error);
+        alert('Gagal memuat data transaksi: ' + error.message);
+      } else if (data) {
+        setTransaksiList(data);
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      alert('Terjadi kesalahan: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  const updateStatus = async (id: string, status: string) => {
-    const { error } = await supabase
-      .from('transaksi')
-      .update({ status_transaksi: status })
-      .eq('id', id);
+  // Show action menu when QR scan finds exactly one result
+  useEffect(() => {
+    if (searchType === 'qr' && transaksiList.length === 1 && searchQuery) {
+      setSelectedTransaksi(transaksiList[0]);
+    } else {
+      setSelectedTransaksi(null);
+    }
+  }, [searchType, transaksiList, searchQuery]);
 
-    if (!error) {
+  const updateStatus = async (id: string, status: string) => {
+    try {
+      const { error } = await supabase
+        .from('transaksi')
+        .update({ status_transaksi: status })
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error updating status:', error);
+        alert('Gagal memperbarui status: ' + error.message);
+        return;
+      }
+
       loadTransaksi();
       if (onUpdate) onUpdate();
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      alert('Terjadi kesalahan: ' + (err instanceof Error ? err.message : 'Unknown error'));
     }
   };
 
   const updatePembayaran = async (id: string, status: string) => {
-    const { error } = await supabase
-      .from('transaksi')
-      .update({ status_pembayaran: status })
-      .eq('id', id);
+    try {
+      const { error } = await supabase
+        .from('transaksi')
+        .update({ status_pembayaran: status })
+        .eq('id', id);
 
-    if (!error) {
+      if (error) {
+        console.error('Error updating pembayaran:', error);
+        alert('Gagal memperbarui status pembayaran: ' + error.message);
+        return;
+      }
+
       loadTransaksi();
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      alert('Terjadi kesalahan: ' + (err instanceof Error ? err.message : 'Unknown error'));
     }
   };
 
   const deleteTransaksi = async (id: string) => {
     if (confirm('Apakah Anda yakin ingin menghapus transaksi ini?')) {
-      const { error } = await supabase
-        .from('transaksi')
-        .delete()
-        .eq('id', id);
+      try {
+        const { error } = await supabase
+          .from('transaksi')
+          .delete()
+          .eq('id', id);
 
-      if (!error) {
+        if (error) {
+          console.error('Error deleting transaksi:', error);
+          alert('Gagal menghapus transaksi: ' + error.message);
+          return;
+        }
+
         loadTransaksi();
         if (onUpdate) onUpdate();
+      } catch (err) {
+        console.error('Unexpected error:', err);
+        alert('Terjadi kesalahan: ' + (err instanceof Error ? err.message : 'Unknown error'));
       }
     }
   };
@@ -119,12 +175,84 @@ export default function TransaksiList({ onUpdate }: TransaksiListProps) {
       : 'bg-red-100 text-red-800 border-red-300';
   };
 
+  const getDeadlineStyle = (deadline: string, status: string) => {
+    const now = new Date();
+    const deadlineDate = new Date(deadline);
+    const hoursUntilDeadline = (deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+    
+    // Jika sudah selesai, tidak perlu warning
+    if (status === 'selesai') {
+      return 'text-gray-600';
+    }
+    
+    // Jika sudah lewat deadline
+    if (hoursUntilDeadline < 0) {
+      return 'text-red-600 font-bold animate-pulse';
+    }
+    
+    // Jika kurang dari 6 jam
+    if (hoursUntilDeadline < 6) {
+      return 'text-red-600 font-semibold';
+    }
+    
+    // Jika kurang dari 12 jam
+    if (hoursUntilDeadline < 12) {
+      return 'text-orange-600 font-medium';
+    }
+    
+    // Jika kurang dari 24 jam
+    if (hoursUntilDeadline < 24) {
+      return 'text-yellow-600';
+    }
+    
+    return 'text-gray-600';
+  };
+
+  const getDeadlineBadge = (deadline: string, status: string) => {
+    const now = new Date();
+    const deadlineDate = new Date(deadline);
+    const hoursUntilDeadline = (deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+    
+    if (status === 'selesai') {
+      return null;
+    }
+    
+    if (hoursUntilDeadline < 0) {
+      return <Badge className="ml-2 bg-red-600 text-white">TERLAMBAT</Badge>;
+    }
+    
+    if (hoursUntilDeadline < 6) {
+      return <Badge className="ml-2 bg-red-500 text-white">URGENT</Badge>;
+    }
+    
+    if (hoursUntilDeadline < 12) {
+      return <Badge className="ml-2 bg-orange-500 text-white">SEGERA</Badge>;
+    }
+    
+    return null;
+  };
+
   if (loading) {
     return <div className="text-center py-8">Memuat data...</div>;
   }
 
+  const handleUpdateStatus = async (id: string, status: string) => {
+    await updateStatus(id, status);
+  };
+
+  const handleUpdatePembayaran = async (id: string, status: string) => {
+    await updatePembayaran(id, status);
+  };
+
   return (
     <div>
+      <QRScanActions
+        transaksi={selectedTransaksi}
+        open={!!selectedTransaksi}
+        onClose={() => setSelectedTransaksi(null)}
+        onUpdateStatus={handleUpdateStatus}
+        onUpdatePembayaran={handleUpdatePembayaran}
+      />
       {transaksiList.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
           <Package className="h-12 w-12 mx-auto mb-4 text-gray-400" />
@@ -167,7 +295,12 @@ export default function TransaksiList({ onUpdate }: TransaksiListProps) {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {format(new Date(transaksi.deadline), 'dd MMM yyyy HH:mm', { locale: idLocale })}
+                    <div className="flex items-center">
+                      <span className={getDeadlineStyle(transaksi.deadline, transaksi.status_transaksi)}>
+                        {format(new Date(transaksi.deadline), 'dd MMM yyyy HH:mm', { locale: idLocale })}
+                      </span>
+                      {getDeadlineBadge(transaksi.deadline, transaksi.status_transaksi)}
+                    </div>
                   </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
