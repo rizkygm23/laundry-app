@@ -31,7 +31,7 @@ export function TransaksiSearch({ onSearch, onClear }: TransaksiSearchProps) {
       // Cleanup QR scanner on unmount
       if (qrCodeRef.current) {
         qrCodeRef.current.stop().catch(() => {});
-        qrCodeRef.current.clear().catch(() => {});
+        qrCodeRef.current.clear();
       }
     };
   }, []);
@@ -54,7 +54,7 @@ export function TransaksiSearch({ onSearch, onClear }: TransaksiSearchProps) {
       // Check if scanner already exists
       if (qrCodeRef.current) {
         await qrCodeRef.current.stop().catch(() => {});
-        await qrCodeRef.current.clear().catch(() => {});
+        qrCodeRef.current.clear();
       }
 
       qrCodeRef.current = new Html5Qrcode(scannerIdRef.current);
@@ -86,7 +86,7 @@ export function TransaksiSearch({ onSearch, onClear }: TransaksiSearchProps) {
     try {
       if (qrCodeRef.current) {
         await qrCodeRef.current.stop();
-        await qrCodeRef.current.clear();
+        qrCodeRef.current.clear();
         qrCodeRef.current = null;
       }
       setScanning(false);
