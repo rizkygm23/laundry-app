@@ -51,6 +51,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, name: string) => {
+    // Get base URL for email verification redirect
+    const baseUrl = typeof window !== 'undefined' 
+      ? (process.env.NEXT_PUBLIC_APP_URL || window.location.origin)
+      : (process.env.NEXT_PUBLIC_APP_URL || 'https://necis-laundry.vercel.app');
+    
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -58,6 +63,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         data: {
           name: name,
         },
+        emailRedirectTo: `${baseUrl}/login`,
       },
     });
 

@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
 import QRCode from 'qrcode';
+import { getBaseUrl } from '@/lib/url';
 
 interface Transaksi {
   id: string;
@@ -50,7 +51,7 @@ export default function StrukPage({ params }: { params: { kode: string } }) {
   };
 
   const generateQRCode = async (kode: string) => {
-    const url = `${window.location.origin}/status/${kode}`;
+    const url = `${getBaseUrl()}/status/${kode}`;
     const qrDataUrl = await QRCode.toDataURL(url, {
       width: 200,
       margin: 2,
@@ -65,7 +66,7 @@ export default function StrukPage({ params }: { params: { kode: string } }) {
   const handleShare = async () => {
     if (!transaksi) return;
 
-    const message = `*STRUK LAUNDRY*\n\nKode: ${transaksi.kode_struk}\nNama: ${transaksi.nama_pelanggan}\nLayanan: ${transaksi.nama_layanan}\nJumlah: ${transaksi.jumlah}\nTotal: Rp ${transaksi.total.toLocaleString('id-ID')}\n\nCek status pesanan: ${window.location.origin}/status/${transaksi.kode_struk}`;
+    const message = `*STRUK LAUNDRY*\n\nKode: ${transaksi.kode_struk}\nNama: ${transaksi.nama_pelanggan}\nLayanan: ${transaksi.nama_layanan}\nJumlah: ${transaksi.jumlah}\nTotal: Rp ${transaksi.total.toLocaleString('id-ID')}\n\nCek status pesanan: ${getBaseUrl()}/status/${transaksi.kode_struk}`;
 
     const whatsappUrl = `https://wa.me/${transaksi.nomor_hp?.replace(/^0/, '62')}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
@@ -187,7 +188,7 @@ export default function StrukPage({ params }: { params: { kode: string } }) {
                 </div>
               )}
               <p className="text-xs text-gray-600 mt-2">
-                atau kunjungi: {window.location.origin}/status/{transaksi.kode_struk}
+                atau kunjungi: {getBaseUrl()}/status/{transaksi.kode_struk}
               </p>
             </div>
           </div>

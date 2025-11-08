@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Download } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import QRCode from 'qrcode';
+import { getBaseUrl } from '@/lib/url';
 
 export default function QRPage({ params }: { params: { kode: string } }) {
   const router = useRouter();
@@ -16,7 +17,7 @@ export default function QRPage({ params }: { params: { kode: string } }) {
   }, [params.kode]);
 
   const generateQRCode = async () => {
-    const url = `${window.location.origin}/status/${params.kode}`;
+    const url = `${getBaseUrl()}/status/${params.kode}`;
     const qrDataUrl = await QRCode.toDataURL(url, {
       width: 400,
       margin: 2,
@@ -60,7 +61,7 @@ export default function QRPage({ params }: { params: { kode: string } }) {
             <div className="text-center mb-6">
               <p className="text-gray-600 mb-2">Scan QR code untuk cek status pesanan</p>
               <p className="text-sm text-gray-500">
-                {window.location.origin}/status/{params.kode}
+                {getBaseUrl()}/status/{params.kode}
               </p>
             </div>
 
