@@ -425,40 +425,28 @@ export default function TransaksiList({
               accentClass
             )}
           >
-            <div className="p-3">
-              <div className="flex items-start justify-between gap-4">
-                <div className="space-y-1">
-                  <p className="text-sm font-semibold text-gray-900 truncate">
-                    {transaksi.nama_pelanggan}
-                  </p>
-                  <p className="text-[11px] text-gray-600 truncate">
-                    {transaksi.jumlah} x {transaksi.nama_layanan}
-                  </p>
-                  <p
-                    className={cn(
-                      'text-[11px]',
-                      isLate ? 'text-red-600 font-medium' : 'text-gray-500 font-medium'
-                    )}
-                  >
-                    {deadlineLabel}
-                  </p>
-                </div>
-                <div className="text-right space-y-1">
-                  <p className="text-[11px] font-mono text-gray-500 truncate max-w-[140px]">
-                    {transaksi.kode_struk}
-                  </p>
-                  <p className="text-xs font-semibold text-gray-800 truncate max-w-[140px]">
-                    {transaksi.nama_layanan}
-                  </p>
-                  <span
-                    className={cn(
-                      'text-xs font-semibold',
-                      transaksi.status_pembayaran === 'lunas' ? 'text-green-600' : 'text-red-600'
-                    )}
-                  >
-                    {transaksi.status_pembayaran === 'lunas' ? 'Lunas' : 'Belum Lunas'}
-                  </span>
-                </div>
+            <div className="p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold text-gray-900 truncate">
+                  {transaksi.nama_pelanggan}
+                </p>
+                <span
+                  className={cn(
+                    'text-xs font-semibold',
+                    transaksi.status_pembayaran === 'lunas' ? 'text-green-600' : 'text-red-600'
+                  )}
+                >
+                  {transaksi.status_pembayaran === 'lunas' ? 'Lunas' : 'Belum Lunas'}
+                </span>
+              </div>
+              <p className="text-[11px] text-gray-600 truncate">
+                {transaksi.jumlah} x {transaksi.nama_layanan}
+              </p>
+              <div className="flex items-center justify-between text-[11px] text-gray-500">
+                <span className="font-mono text-gray-500">{transaksi.kode_struk}</span>
+                <span className={isLate ? 'text-red-600 font-medium' : 'text-gray-500 font-medium'}>
+                  {deadlineLabel}
+                </span>
               </div>
             </div>
           </Card>
