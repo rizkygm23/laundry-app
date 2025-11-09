@@ -15,8 +15,8 @@ interface Transaksi {
   id: string;
   kode_struk: string;
   nama_pelanggan: string;
-  nomor_hp: string;
-  alamat_pelanggan: string;
+  alamat_pelanggan: string | null;
+  id_pelanggan: string | null;
   nama_layanan: string;
   jumlah: number;
   harga_layanan: number;
@@ -30,8 +30,13 @@ interface Transaksi {
 export default function StrukPage({ params }: { params: { kode: string } }) {
   const router = useRouter();
   const strukRef = useRef<HTMLDivElement>(null);
-  const [transaksi, setTransaksi] = useState<Transaksi | null>(null);
+  const [transaksiList, setTransaksiList] = useState<Transaksi[]>([]);
   const [qrCodeUrl, setQrCodeUrl] = useState('');
+  const [pelangganInfo, setPelangganInfo] = useState<{
+    nama: string | null;
+    nomor_hp: string | null;
+    alamat: string | null;
+  } | null>(null);
 
   useEffect(() => {
     loadTransaksi();
@@ -42,11 +47,47 @@ export default function StrukPage({ params }: { params: { kode: string } }) {
       .from('transaksi')
       .select('*')
       .eq('kode_struk', params.kode)
-      .single();
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('Gagal memuat struk:', error);
+      return;
+    }
+
+    if (data && data.length > 0) {
+      setTransaksiList(data);
+      const pelangganId = data[0].id_pelanggan;
+      if (pelangganId) {
+        fetchPelanggan(pelangganId);
+      } else {
+        setPelangganInfo({
+          nama: data[0].nama_pelanggan ?? null,
+          nomor_hp: null,
+          alamat: data[0].alamat_pelanggan ?? null,
+        });
+      }
+      generateQRCode(params.kode);
+    }
+  };
+
+  const fetchPelanggan = async (pelangganId: string) => {
+    const { data, error } = await supabase
+      .from('pelanggan')
+      .select('nama, nomor_hp, alamat')
+      .eq('id', pelangganId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Gagal memuat data pelanggan:', error);
+      return;
+    }
 
     if (data) {
-      setTransaksi(data);
-      generateQRCode(data.kode_struk);
+      setPelangganInfo({
+        nama: data.nama,
+        nomor_hp: data.nomor_hp,
+        alamat: data.alamat,
+      });
     }
   };
 
@@ -64,35 +105,70 @@ export default function StrukPage({ params }: { params: { kode: string } }) {
   };
 
   const handleShare = async () => {
-    if (!transaksi) return;
+    if (transaksiList.length === 0) return;
 
-    const message = `*STRUK LAUNDRY*\n\nKode: ${transaksi.kode_struk}\nNama: ${transaksi.nama_pelanggan}\nLayanan: ${transaksi.nama_layanan}\nJumlah: ${transaksi.jumlah}\nTotal: Rp ${transaksi.total.toLocaleString('id-ID')}\n\nCek status pesanan: ${getBaseUrl()}/status/${transaksi.kode_struk}`;
+    const first = transaksiList[0];
+    const totalPembayaran = transaksiList.reduce((sum, item) => sum + item.total, 0);
+    const detailLayanan = transaksiList
+      .map(
+        (item) =>
+          `- ${item.nama_layanan} (${item.jumlah}) : Rp ${item.total.toLocaleString('id-ID')}`
+      )
+      .join('\n');
+    const statusUrl = `${getBaseUrl()}/status/${first.kode_struk}`;
 
-    const whatsappUrl = `https://wa.me/${transaksi.nomor_hp?.replace(/^0/, '62')}?text=${encodeURIComponent(message)}`;
+    const message = `*STRUK LAUNDRY*\n\nKode: ${first.kode_struk}\nNama: ${first.nama_pelanggan}\n\nLayanan:\n${detailLayanan}\n\nTotal: Rp ${totalPembayaran.toLocaleString('id-ID')}\n\nCek status pesanan: ${statusUrl}`;
+
+    const nomorHp = pelangganInfo?.nomor_hp?.replace(/^0/, '62');
+    const whatsappUrl = nomorHp
+      ? `https://wa.me/${nomorHp}?text=${encodeURIComponent(message)}`
+      : `https://wa.me/?text=${encodeURIComponent(message)}`;
+
+    if (!nomorHp && typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(message).catch(() => {});
+      alert('Nomor WhatsApp pelanggan tidak tersedia. Pesan struk telah disalin ke clipboard.');
+    }
+
     window.open(whatsappUrl, '_blank');
   };
 
-  if (!transaksi) {
+  if (transaksiList.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div>Loading...</div>
+        <div>Memuat struk...</div>
       </div>
     );
   }
 
+  const first = transaksiList[0];
+  const totalPembayaran = transaksiList.reduce((sum, item) => sum + item.total, 0);
+  const isSemuaLunas = transaksiList.every((item) => item.status_pembayaran === 'lunas');
+  const statusPembayaran = isSemuaLunas ? 'lunas' : 'belum_lunas';
+  const statusTransaksi = first.status_transaksi;
+  const maxDeadline = transaksiList.reduce((latest, item) => {
+    const itemDeadline = new Date(item.deadline);
+    return itemDeadline > latest ? itemDeadline : latest;
+  }, new Date(first.deadline));
+
   return (
     <div className="min-h-screen bg-gray-100 py-8">
       <div className="container mx-auto px-4 max-w-2xl">
-        <div className="no-print mb-6 flex gap-4">
-          <Button variant="ghost" onClick={() => router.push('/')}>
+        <div className="no-print mb-6 flex flex-col sm:flex-row gap-3 sm:gap-4">
+          <Button variant="ghost" onClick={() => router.push('/')} className="w-full sm:w-auto">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Kembali
           </Button>
-          <Button onClick={handlePrint} className="bg-blue-600 hover:bg-blue-700">
+          <Button
+            onClick={handlePrint}
+            className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
+          >
             <Printer className="mr-2 h-4 w-4" />
             Cetak
           </Button>
-          <Button onClick={handleShare} className="bg-green-600 hover:bg-green-700">
+          <Button
+            onClick={handleShare}
+            className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
+          >
             <Share2 className="mr-2 h-4 w-4" />
             Kirim WA
           </Button>
@@ -110,26 +186,32 @@ export default function StrukPage({ params }: { params: { kode: string } }) {
           <div className="border-t-2 border-b-2 border-dashed border-gray-300 py-4 mb-4">
             <div className="text-center mb-2">
               <div className="text-xs text-gray-600">KODE TRANSAKSI</div>
-              <div className="text-2xl font-bold font-mono">{transaksi.kode_struk}</div>
+              <div className="text-2xl font-bold font-mono">{first.kode_struk}</div>
             </div>
             <div className="text-xs text-gray-600 text-center">
-              {format(new Date(transaksi.created_at), 'dd MMMM yyyy HH:mm', { locale: idLocale })}
+              {format(new Date(first.created_at), 'dd MMMM yyyy HH:mm', { locale: idLocale })}
             </div>
           </div>
 
           <div className="space-y-2 mb-6 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-600">Nama:</span>
-              <span className="font-semibold">{transaksi.nama_pelanggan}</span>
+              <span className="font-semibold">
+                {pelangganInfo?.nama || first.nama_pelanggan || '-'}
+              </span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-600">No. HP:</span>
-              <span className="font-semibold">{transaksi.nomor_hp}</span>
-            </div>
-            {transaksi.alamat_pelanggan && (
+            {pelangganInfo?.nomor_hp && (
+              <div className="flex justify-between">
+                <span className="text-gray-600">No. HP:</span>
+                <span className="font-semibold">{pelangganInfo.nomor_hp}</span>
+              </div>
+            )}
+            {(pelangganInfo?.alamat || first.alamat_pelanggan) && (
               <div className="flex justify-between">
                 <span className="text-gray-600">Alamat:</span>
-                <span className="font-semibold text-right max-w-xs">{transaksi.alamat_pelanggan}</span>
+                <span className="font-semibold text-right max-w-xs">
+                  {pelangganInfo?.alamat || first.alamat_pelanggan}
+                </span>
               </div>
             )}
           </div>
@@ -145,12 +227,18 @@ export default function StrukPage({ params }: { params: { kode: string } }) {
                 </tr>
               </thead>
               <tbody>
-                <tr className="border-b border-gray-200">
-                  <td className="py-2">{transaksi.nama_layanan}</td>
-                  <td className="text-center py-2">{transaksi.jumlah}</td>
-                  <td className="text-right py-2">Rp {transaksi.harga_layanan.toLocaleString('id-ID')}</td>
-                  <td className="text-right py-2 font-semibold">Rp {transaksi.total.toLocaleString('id-ID')}</td>
-                </tr>
+                {transaksiList.map((item) => (
+                  <tr key={item.id} className="border-b border-gray-200">
+                    <td className="py-2">{item.nama_layanan}</td>
+                    <td className="text-center py-2">{item.jumlah}</td>
+                    <td className="text-right py-2">
+                      Rp {item.harga_layanan.toLocaleString('id-ID')}
+                    </td>
+                    <td className="text-right py-2 font-semibold">
+                      Rp {item.total.toLocaleString('id-ID')}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -158,23 +246,25 @@ export default function StrukPage({ params }: { params: { kode: string } }) {
           <div className="border-t-2 border-gray-300 pt-4 mb-6">
             <div className="flex justify-between text-lg font-bold">
               <span>TOTAL PEMBAYARAN</span>
-              <span>Rp {transaksi.total.toLocaleString('id-ID')}</span>
+              <span>Rp {totalPembayaran.toLocaleString('id-ID')}</span>
             </div>
           </div>
 
           <div className="space-y-2 mb-6 text-sm">
             <div className="flex justify-between">
               <span className="text-gray-600">Status Transaksi:</span>
-              <span className="font-semibold uppercase">{transaksi.status_transaksi}</span>
+              <span className="font-semibold uppercase">{statusTransaksi}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Status Pembayaran:</span>
-              <span className="font-semibold uppercase">{transaksi.status_pembayaran === 'lunas' ? 'LUNAS' : 'BELUM LUNAS'}</span>
+              <span className="font-semibold uppercase">
+                {statusPembayaran === 'lunas' ? 'LUNAS' : 'BELUM LUNAS'}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Estimasi Selesai:</span>
               <span className="font-semibold">
-                {format(new Date(transaksi.deadline), 'dd MMM yyyy HH:mm', { locale: idLocale })}
+                {format(maxDeadline, 'dd MMM yyyy HH:mm', { locale: idLocale })}
               </span>
             </div>
           </div>
@@ -188,7 +278,7 @@ export default function StrukPage({ params }: { params: { kode: string } }) {
                 </div>
               )}
               <p className="text-xs text-gray-600 mt-2">
-                atau kunjungi: {getBaseUrl()}/status/{transaksi.kode_struk}
+                atau kunjungi: {getBaseUrl()}/status/{first.kode_struk}
               </p>
             </div>
           </div>

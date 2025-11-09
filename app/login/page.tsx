@@ -33,7 +33,12 @@ export default function LoginPage() {
       const { error } = await signIn(email, password);
 
       if (error) {
-        toast.error('Login gagal: ' + error.message);
+        // Check if error is about email not confirmed
+        if (error.message?.toLowerCase().includes('email') && error.message?.toLowerCase().includes('confirm')) {
+          toast.error('Email belum diverifikasi. Silakan cek email Anda atau hubungi admin untuk menonaktifkan verifikasi email di Supabase Dashboard.');
+        } else {
+          toast.error('Login gagal: ' + error.message);
+        }
       } else {
         toast.success('Login berhasil!');
         router.push('/');

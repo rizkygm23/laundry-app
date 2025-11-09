@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,10 +18,27 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, QrCode, Printer, Trash2, Eye, Package } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
+import {
+  MoreHorizontal,
+  QrCode,
+  Printer,
+  Trash2,
+  Eye,
+  Package,
+  User,
+  Clock3,
+  ChevronRight,
+} from 'lucide-react';
 import { format } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { QRScanActions } from './QRScanActions';
 
@@ -36,56 +53,80 @@ export interface Transaksi {
   status_pembayaran: string;
   deadline: string;
   created_at: string;
+  nomor_hp?: string;
+  alamat_pelanggan?: string;
 }
 
 interface TransaksiListProps {
   onUpdate?: () => void;
   searchQuery?: string;
   searchType?: 'nama' | 'kode' | 'qr';
+  view?: 'cards' | 'table';
+  excludeCompleted?: boolean;
 }
 
-export default function TransaksiList({ onUpdate, searchQuery, searchType }: TransaksiListProps) {
+const cardAccent: Record<string, string> = {
+  antrian: 'border-l-4 border-l-amber-500 bg-amber-50/60',
+  proses: 'border-l-4 border-l-cyan-500 bg-cyan-50/60',
+  selesai: 'border-l-4 border-l-green-500 bg-green-50/60',
+  default: 'border-l-4 border-l-gray-200 bg-white',
+};
+
+export default function TransaksiList({
+  onUpdate,
+  searchQuery,
+  searchType = 'nama',
+  view = 'cards',
+  excludeCompleted = false,
+}: TransaksiListProps) {
   const router = useRouter();
   const [transaksiList, setTransaksiList] = useState<Transaksi[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedTransaksi, setSelectedTransaksi] = useState<Transaksi | null>(null);
+  const [activeTransaksi, setActiveTransaksi] = useState<Transaksi | null>(null);
+  const [actionModalOpen, setActionModalOpen] = useState(false);
 
-  useEffect(() => {
-    loadTransaksi();
-  }, [searchQuery, searchType]);
-
-  const loadTransaksi = async () => {
+  const loadTransaksi = useCallback(async () => {
     setLoading(true);
     try {
       let query = supabase.from('transaksi').select('*');
 
-      if (searchQuery && searchType) {
-        if (searchType === 'nama') {
-          query = query.ilike('nama_pelanggan', `%${searchQuery}%`);
-        } else if (searchType === 'kode' || searchType === 'qr') {
-          query = query.ilike('kode_struk', `%${searchQuery}%`);
-        }
+      if (searchQuery) {
+        query = query.or(
+          `nama_pelanggan.ilike.%${searchQuery}%,kode_struk.ilike.%${searchQuery}%`
+        );
       }
 
       const { data, error } = await query.order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error loading transaksi:', error);
-        alert('Gagal memuat data transaksi: ' + error.message);
+        console.error('Error loading pesanan:', error);
+        alert('Gagal memuat data pesanan: ' + error.message);
       } else if (data) {
-        setTransaksiList(data);
+        const filtered = excludeCompleted
+          ? data.filter(
+              (item) =>
+                !(item.status_transaksi === 'selesai' && item.status_pembayaran === 'lunas')
+            )
+          : data;
+
+        setTransaksiList(filtered);
       }
     } catch (err) {
-      console.error('Unexpected error:', err);
+      console.error('Unexpected error saat memuat pesanan:', err);
       alert('Terjadi kesalahan: ' + (err instanceof Error ? err.message : 'Unknown error'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [excludeCompleted, searchQuery]);
+
+  useEffect(() => {
+    loadTransaksi();
+  }, [loadTransaksi]);
 
   // Show action menu when QR scan finds exactly one result
   useEffect(() => {
-    if (searchType === 'qr' && transaksiList.length === 1 && searchQuery) {
+    if (searchType === 'qr' && searchQuery && transaksiList.length === 1) {
       setSelectedTransaksi(transaksiList[0]);
     } else {
       setSelectedTransaksi(null);
@@ -101,14 +142,14 @@ export default function TransaksiList({ onUpdate, searchQuery, searchType }: Tra
 
       if (error) {
         console.error('Error updating status:', error);
-        alert('Gagal memperbarui status: ' + error.message);
+        alert('Gagal memperbarui status pesanan: ' + error.message);
         return;
       }
 
-      loadTransaksi();
+      await loadTransaksi();
       if (onUpdate) onUpdate();
     } catch (err) {
-      console.error('Unexpected error:', err);
+      console.error('Unexpected error saat memperbarui status pesanan:', err);
       alert('Terjadi kesalahan: ' + (err instanceof Error ? err.message : 'Unknown error'));
     }
   };
@@ -126,33 +167,37 @@ export default function TransaksiList({ onUpdate, searchQuery, searchType }: Tra
         return;
       }
 
-      loadTransaksi();
+      await loadTransaksi();
+      if (onUpdate) onUpdate();
     } catch (err) {
-      console.error('Unexpected error:', err);
+      console.error('Unexpected error saat memperbarui pembayaran:', err);
       alert('Terjadi kesalahan: ' + (err instanceof Error ? err.message : 'Unknown error'));
     }
   };
 
   const deleteTransaksi = async (id: string) => {
-    if (confirm('Apakah Anda yakin ingin menghapus transaksi ini?')) {
-      try {
-        const { error } = await supabase
-          .from('transaksi')
-          .delete()
-          .eq('id', id);
+    const confirmed = confirm('Apakah Anda yakin ingin menghapus pesanan ini?');
+    if (!confirmed) return false;
 
-        if (error) {
-          console.error('Error deleting transaksi:', error);
-          alert('Gagal menghapus transaksi: ' + error.message);
-          return;
-        }
+    try {
+      const { error } = await supabase
+        .from('transaksi')
+        .delete()
+        .eq('id', id);
 
-        loadTransaksi();
-        if (onUpdate) onUpdate();
-      } catch (err) {
-        console.error('Unexpected error:', err);
-        alert('Terjadi kesalahan: ' + (err instanceof Error ? err.message : 'Unknown error'));
+      if (error) {
+        console.error('Error deleting pesanan:', error);
+        alert('Gagal menghapus pesanan: ' + error.message);
+        return false;
       }
+
+      await loadTransaksi();
+      if (onUpdate) onUpdate();
+      return true;
+    } catch (err) {
+      console.error('Unexpected error saat menghapus pesanan:', err);
+      alert('Terjadi kesalahan: ' + (err instanceof Error ? err.message : 'Unknown error'));
+      return false;
     }
   };
 
@@ -179,32 +224,27 @@ export default function TransaksiList({ onUpdate, searchQuery, searchType }: Tra
     const now = new Date();
     const deadlineDate = new Date(deadline);
     const hoursUntilDeadline = (deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-    
-    // Jika sudah selesai, tidak perlu warning
+
     if (status === 'selesai') {
       return 'text-gray-600';
     }
-    
-    // Jika sudah lewat deadline
+
     if (hoursUntilDeadline < 0) {
       return 'text-red-600 font-bold animate-pulse';
     }
-    
-    // Jika kurang dari 6 jam
+
     if (hoursUntilDeadline < 6) {
       return 'text-red-600 font-semibold';
     }
-    
-    // Jika kurang dari 12 jam
+
     if (hoursUntilDeadline < 12) {
       return 'text-orange-600 font-medium';
     }
-    
-    // Jika kurang dari 24 jam
+
     if (hoursUntilDeadline < 24) {
       return 'text-yellow-600';
     }
-    
+
     return 'text-gray-600';
   };
 
@@ -212,24 +252,47 @@ export default function TransaksiList({ onUpdate, searchQuery, searchType }: Tra
     const now = new Date();
     const deadlineDate = new Date(deadline);
     const hoursUntilDeadline = (deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60);
-    
+
     if (status === 'selesai') {
       return null;
     }
-    
+
     if (hoursUntilDeadline < 0) {
       return <Badge className="ml-2 bg-red-600 text-white">TERLAMBAT</Badge>;
     }
-    
+
     if (hoursUntilDeadline < 6) {
       return <Badge className="ml-2 bg-red-500 text-white">URGENT</Badge>;
     }
-    
+
     if (hoursUntilDeadline < 12) {
       return <Badge className="ml-2 bg-orange-500 text-white">SEGERA</Badge>;
     }
-    
+
     return null;
+  };
+
+  const handleCardClick = (transaksi: Transaksi) => {
+    setActiveTransaksi(transaksi);
+    setActionModalOpen(true);
+  };
+
+  const closeActionModal = () => {
+    setActionModalOpen(false);
+    setActiveTransaksi(null);
+  };
+
+  const handleNavigate = (path: string) => {
+    closeActionModal();
+    router.push(path);
+  };
+
+  const handleDeleteFromModal = async () => {
+    if (!activeTransaksi) return;
+    const success = await deleteTransaksi(activeTransaksi.id);
+    if (success) {
+      closeActionModal();
+    }
   };
 
   if (loading) {
@@ -244,6 +307,164 @@ export default function TransaksiList({ onUpdate, searchQuery, searchType }: Tra
     await updatePembayaran(id, status);
   };
 
+  const renderTableView = () => (
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-gray-50">
+            <TableHead className="font-semibold">Kode</TableHead>
+            <TableHead className="font-semibold">Pelanggan</TableHead>
+            <TableHead className="font-semibold">Layanan</TableHead>
+            <TableHead className="font-semibold">Jumlah</TableHead>
+            <TableHead className="font-semibold">Total</TableHead>
+            <TableHead className="font-semibold">Status</TableHead>
+            <TableHead className="font-semibold">Pembayaran</TableHead>
+            <TableHead className="font-semibold">Deadline</TableHead>
+            <TableHead className="font-semibold text-right">Aksi</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {transaksiList.map((transaksi) => (
+            <TableRow key={transaksi.id} className="hover:bg-gray-50">
+              <TableCell className="font-mono font-medium">{transaksi.kode_struk}</TableCell>
+              <TableCell>{transaksi.nama_pelanggan}</TableCell>
+              <TableCell>{transaksi.nama_layanan}</TableCell>
+              <TableCell>{transaksi.jumlah}</TableCell>
+              <TableCell className="font-semibold">
+                Rp {transaksi.total.toLocaleString('id-ID')}
+              </TableCell>
+              <TableCell>
+                <Badge variant="outline" className={getStatusColor(transaksi.status_transaksi)}>
+                  {transaksi.status_transaksi.toUpperCase()}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <Badge variant="outline" className={getPembayaranColor(transaksi.status_pembayaran)}>
+                  {transaksi.status_pembayaran === 'lunas' ? 'LUNAS' : 'BELUM LUNAS'}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center">
+                  <span className={getDeadlineStyle(transaksi.deadline, transaksi.status_transaksi)}>
+                    {format(new Date(transaksi.deadline), 'dd MMM yyyy HH:mm', { locale: idLocale })}
+                  </span>
+                  {getDeadlineBadge(transaksi.deadline, transaksi.status_transaksi)}
+                </div>
+              </TableCell>
+              <TableCell className="text-right">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={() => router.push(`/transaksi/${transaksi.id}`)}>
+                      <Eye className="mr-2 h-4 w-4" />
+                      Lihat Detail
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push(`/struk/${transaksi.kode_struk}`)}>
+                      <Printer className="mr-2 h-4 w-4" />
+                      Cetak Struk
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.push(`/qr/${transaksi.kode_struk}`)}>
+                      <QrCode className="mr-2 h-4 w-4" />
+                      Lihat QR Code
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => updateStatus(transaksi.id, 'antrian')}>
+                      Set Antrian
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => updateStatus(transaksi.id, 'proses')}>
+                      Set Proses
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => updateStatus(transaksi.id, 'selesai')}>
+                      Set Selesai
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => updatePembayaran(transaksi.id, 'lunas')}>
+                      Tandai Lunas
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => deleteTransaksi(transaksi.id)}
+                      className="text-red-600"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Hapus
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+
+  const renderCardsView = () => (
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {transaksiList.map((transaksi) => {
+        const accentClass = cardAccent[transaksi.status_transaksi] || cardAccent.default;
+        const deadlineDate = new Date(transaksi.deadline);
+        const diffHours = Math.max(
+          0,
+          Math.floor(Math.abs(deadlineDate.getTime() - Date.now()) / (1000 * 60 * 60))
+        );
+        const isLate = deadlineDate.getTime() < Date.now();
+        const deadlineLabel = isLate
+          ? `Est. Selesai Terlambat ${diffHours} Jam`
+          : `Est. Selesai ${diffHours === 0 ? 'Kurang dari 1 Jam' : `${diffHours} Jam Lagi`}`;
+
+        return (
+          <Card
+            key={transaksi.id}
+            onClick={() => handleCardClick(transaksi)}
+            className={cn(
+              'cursor-pointer border border-gray-200 hover:border-blue-200 transition hover:shadow-md',
+              accentClass
+            )}
+          >
+            <div className="p-3">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-gray-900 truncate">
+                    {transaksi.nama_pelanggan}
+                  </p>
+                  <p className="text-xs text-gray-600 truncate">
+                    {transaksi.jumlah} x {transaksi.nama_layanan}
+                  </p>
+                  <p
+                    className={cn(
+                      'text-xs',
+                      isLate ? 'text-red-600 font-medium' : 'text-gray-500 font-medium'
+                    )}
+                  >
+                    {deadlineLabel}
+                  </p>
+                </div>
+                <div className="text-right space-y-1">
+                  <p className="text-[11px] font-mono text-gray-500 truncate max-w-[140px]">
+                    {transaksi.kode_struk}
+                  </p>
+                  <p className="text-xs font-semibold text-gray-800 truncate max-w-[140px]">
+                    {transaksi.nama_layanan}
+                  </p>
+                  <span
+                    className={cn(
+                      'text-xs font-semibold',
+                      transaksi.status_pembayaran === 'lunas' ? 'text-green-600' : 'text-red-600'
+                    )}
+                  >
+                    {transaksi.status_pembayaran === 'lunas' ? 'Lunas' : 'Belum Lunas'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </Card>
+        );
+      })}
+    </div>
+  );
+
   return (
     <div>
       <QRScanActions
@@ -253,103 +474,116 @@ export default function TransaksiList({ onUpdate, searchQuery, searchType }: Tra
         onUpdateStatus={handleUpdateStatus}
         onUpdatePembayaran={handleUpdatePembayaran}
       />
+
       {transaksiList.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
           <Package className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-          <p>Belum ada transaksi</p>
+          <p>Belum ada pesanan</p>
         </div>
       ) : (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold">Kode</TableHead>
-                <TableHead className="font-semibold">Pelanggan</TableHead>
-                <TableHead className="font-semibold">Layanan</TableHead>
-                <TableHead className="font-semibold">Jumlah</TableHead>
-                <TableHead className="font-semibold">Total</TableHead>
-                <TableHead className="font-semibold">Status</TableHead>
-                <TableHead className="font-semibold">Pembayaran</TableHead>
-                <TableHead className="font-semibold">Deadline</TableHead>
-                <TableHead className="font-semibold text-right">Aksi</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {transaksiList.map((transaksi) => (
-                <TableRow key={transaksi.id} className="hover:bg-gray-50">
-                  <TableCell className="font-mono font-medium">{transaksi.kode_struk}</TableCell>
-                  <TableCell>{transaksi.nama_pelanggan}</TableCell>
-                  <TableCell>{transaksi.nama_layanan}</TableCell>
-                  <TableCell>{transaksi.jumlah}</TableCell>
-                  <TableCell className="font-semibold">
-                    Rp {transaksi.total.toLocaleString('id-ID')}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={getStatusColor(transaksi.status_transaksi)}>
-                      {transaksi.status_transaksi.toUpperCase()}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={getPembayaranColor(transaksi.status_pembayaran)}>
-                      {transaksi.status_pembayaran === 'lunas' ? 'LUNAS' : 'BELUM LUNAS'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center">
-                      <span className={getDeadlineStyle(transaksi.deadline, transaksi.status_transaksi)}>
-                        {format(new Date(transaksi.deadline), 'dd MMM yyyy HH:mm', { locale: idLocale })}
+        <>
+          {view === 'table' ? renderTableView() : renderCardsView()}
+          <Dialog
+            open={actionModalOpen}
+            onOpenChange={(open) => {
+              setActionModalOpen(open);
+              if (!open) {
+                setActiveTransaksi(null);
+              }
+            }}
+          >
+            <DialogContent className="sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Kelola Pesanan</DialogTitle>
+              </DialogHeader>
+              {activeTransaksi && (
+                <div className="space-y-5">
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-600">Kode</span>
+                      <span className="font-mono text-lg font-semibold text-gray-900">
+                        {activeTransaksi.kode_struk}
                       </span>
-                      {getDeadlineBadge(transaksi.deadline, transaksi.status_transaksi)}
                     </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem onClick={() => router.push(`/transaksi/${transaksi.id}`)}>
-                          <Eye className="mr-2 h-4 w-4" />
-                          Lihat Detail
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => router.push(`/struk/${transaksi.kode_struk}`)}>
-                          <Printer className="mr-2 h-4 w-4" />
-                          Cetak Struk
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => router.push(`/qr/${transaksi.kode_struk}`)}>
-                          <QrCode className="mr-2 h-4 w-4" />
-                          Lihat QR Code
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => updateStatus(transaksi.id, 'antrian')}>
-                          Set Antrian
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => updateStatus(transaksi.id, 'proses')}>
-                          Set Proses
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => updateStatus(transaksi.id, 'selesai')}>
-                          Set Selesai
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => updatePembayaran(transaksi.id, 'lunas')}>
-                          Tandai Lunas
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => deleteTransaksi(transaksi.id)}
-                          className="text-red-600"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Hapus
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+                    <div className="flex items-center justify-between text-sm text-gray-600">
+                      <span>Pelanggan</span>
+                      <span className="font-semibold text-gray-900">
+                        {activeTransaksi.nama_pelanggan}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm text-gray-600">
+                      <span>Layanan</span>
+                      <span className="font-semibold text-gray-900">
+                        {activeTransaksi.nama_layanan} &middot; {activeTransaksi.jumlah}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm text-gray-600">
+                      <span>Total</span>
+                      <span className="font-semibold text-gray-900">
+                        Rp {activeTransaksi.total.toLocaleString('id-ID')}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm text-gray-600">
+                      <span>Status</span>
+                      <Badge
+                        variant="outline"
+                        className={getStatusColor(activeTransaksi.status_transaksi)}
+                      >
+                        {activeTransaksi.status_transaksi.toUpperCase()}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between text-sm text-gray-600">
+                      <span>Pembayaran</span>
+                      <Badge
+                        variant="outline"
+                        className={getPembayaranColor(activeTransaksi.status_pembayaran)}
+                      >
+                        {activeTransaksi.status_pembayaran === 'lunas' ? 'LUNAS' : 'BELUM LUNAS'}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <Button variant="outline" onClick={() => handleNavigate(`/transaksi/${activeTransaksi.id}`)}>
+                      <Eye className="mr-2 h-4 w-4" />
+                      Lihat Detail
+                    </Button>
+                    <Button variant="outline" onClick={() => handleNavigate(`/struk/${activeTransaksi.kode_struk}`)}>
+                      <Printer className="mr-2 h-4 w-4" />
+                      Cetak Struk
+                    </Button>
+                    <Button variant="outline" onClick={() => handleNavigate(`/qr/${activeTransaksi.kode_struk}`)}>
+                      <QrCode className="mr-2 h-4 w-4" />
+                      Lihat QR
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => updatePembayaran(activeTransaksi.id, 'lunas')}
+                    >
+                      Tandai Lunas
+                    </Button>
+                    <Button variant="outline" onClick={() => updateStatus(activeTransaksi.id, 'antrian')}>
+                      Set Antrian
+                    </Button>
+                    <Button variant="outline" onClick={() => updateStatus(activeTransaksi.id, 'proses')}>
+                      Set Proses
+                    </Button>
+                    <Button variant="outline" onClick={() => updateStatus(activeTransaksi.id, 'selesai')}>
+                      Set Selesai
+                    </Button>
+                    <Button variant="destructive" onClick={handleDeleteFromModal}>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Hapus Pesanan
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+        </>
       )}
     </div>
   );
 }
+
+

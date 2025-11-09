@@ -10,7 +10,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, name: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, name: string) => Promise<{ error: any; data?: any }>;
   signOut: () => Promise<void>;
 }
 
@@ -51,11 +51,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, name: string) => {
-    // Get base URL for email verification redirect
-    const baseUrl = typeof window !== 'undefined' 
-      ? (process.env.NEXT_PUBLIC_APP_URL || window.location.origin)
-      : (process.env.NEXT_PUBLIC_APP_URL || 'https://necis-laundry.vercel.app');
-    
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -63,7 +58,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         data: {
           name: name,
         },
-        emailRedirectTo: `${baseUrl}/login`,
+        // Email verification disabled - users can login immediately after registration
+        // Make sure to disable "Enable email confirmations" in Supabase Dashboard
       },
     });
 
@@ -89,9 +85,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('Error creating user profile:', err);
         // Don't fail registration if profile creation fails
       }
+
+      // If session is available (email confirmation disabled), auto-login
+      if (data.session) {
+        setSession(data.session);
+        setUser(data.user);
+      }
     }
 
-    return { error };
+    return { error, data };
   };
 
   const signOut = async () => {

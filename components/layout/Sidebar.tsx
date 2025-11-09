@@ -12,6 +12,7 @@ import {
   LogOut,
   Menu,
   X,
+  ClipboardList,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
@@ -27,14 +28,15 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Transaksi Baru', href: '/transaksi/create', icon: PlusCircle },
+  { name: 'Pesanan Baru', href: '/transaksi/create', icon: PlusCircle },
+  { name: 'Transaksi', href: '/transaksi', icon: ClipboardList },
   { name: 'Layanan', href: '/layanan', icon: Package },
   { name: 'Pelanggan', href: '/pelanggan', icon: Users },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { user, signOut, loading } = useAuth();
+  const { user, signOut } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const getUserInitials = () => {
@@ -51,11 +53,7 @@ export function Sidebar() {
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="bg-white shadow-md"
         >
-          {mobileMenuOpen ? (
-            <X className="h-5 w-5" />
-          ) : (
-            <Menu className="h-5 w-5" />
-          )}
+          {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
       </div>
 
@@ -92,9 +90,7 @@ export function Sidebar() {
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
                     'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors',
-                    isActive
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-gray-700 hover:bg-gray-50'
+                    isActive ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'
                   )}
                 >
                   <item.icon className="h-5 w-5" />
@@ -108,10 +104,7 @@ export function Sidebar() {
           <div className="p-4 border-t border-gray-200">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start gap-3 h-auto py-3"
-                >
+                <Button variant="ghost" className="w-full justify-start gap-3 h-auto py-3">
                   <Avatar className="h-8 w-8">
                     <AvatarFallback className="bg-blue-600 text-white text-sm">
                       {getUserInitials()}

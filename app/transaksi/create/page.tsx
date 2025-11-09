@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, PlusCircle, Trash2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -27,16 +27,27 @@ interface Layanan {
   durasi_pengerjaan_jam: number;
 }
 
+interface OrderItem {
+  id: string;
+  layanan: Layanan | null;
+  jumlah: string;
+}
+
+const createEmptyItem = (): OrderItem => ({
+  id: typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : Date.now().toString(),
+  layanan: null,
+  jumlah: '1',
+});
+
 export default function CreateTransaksi() {
   const router = useRouter();
   const { user } = useAuth();
   const [layananList, setLayananList] = useState<Layanan[]>([]);
-  const [selectedLayanan, setSelectedLayanan] = useState<Layanan | null>(null);
+  const [orderItems, setOrderItems] = useState<OrderItem[]>([createEmptyItem()]);
   const [formData, setFormData] = useState({
     nama_pelanggan: '',
     nomor_hp: '',
     alamat: '',
-    jumlah: '1',
   });
 
   useEffect(() => {
@@ -47,12 +58,10 @@ export default function CreateTransaksi() {
   useEffect(() => {
     const fetchPelanggan = async () => {
       const nomorHp = formData.nomor_hp.trim();
-      
-      // Hanya cek jika nomor HP sudah cukup panjang (minimal 10 digit)
+
       if (nomorHp.length < 10) {
-        // Reset form jika nomor HP terlalu pendek
         if (formData.nama_pelanggan || formData.alamat) {
-          setFormData(prev => ({
+          setFormData((prev) => ({
             ...prev,
             nama_pelanggan: '',
             alamat: '',
@@ -74,12 +83,10 @@ export default function CreateTransaksi() {
         }
 
         if (data) {
-          // Pelanggan ditemukan, auto-fill nama dan alamat
-          setFormData(prev => {
-            // Hanya update jika berbeda untuk menghindari loop
-            const shouldUpdate = prev.nama_pelanggan !== data.nama || prev.alamat !== (data.alamat || '');
+          setFormData((prev) => {
+            const shouldUpdate =
+              prev.nama_pelanggan !== data.nama || prev.alamat !== (data.alamat || '');
             if (shouldUpdate) {
-              // Hanya show toast jika ini update pertama kali (nama sebelumnya kosong)
               if (!prev.nama_pelanggan) {
                 toast.success(`Pelanggan ditemukan: ${data.nama}`);
               }
@@ -92,11 +99,8 @@ export default function CreateTransaksi() {
             return prev;
           });
         } else {
-          // Pelanggan tidak ditemukan, clear nama dan alamat
-          setFormData(prev => {
-            // Hanya reset jika sebelumnya ada data (untuk menghindari reset saat user sedang mengetik)
+          setFormData((prev) => {
             if (prev.nama_pelanggan || prev.alamat) {
-              // Hanya clear jika nomor HP benar-benar berbeda (bukan karena sedang diketik)
               return {
                 ...prev,
                 nama_pelanggan: '',
@@ -111,7 +115,6 @@ export default function CreateTransaksi() {
       }
     };
 
-    // Debounce untuk menghindari terlalu banyak request
     const timer = setTimeout(() => {
       fetchPelanggan();
     }, 800);
@@ -140,34 +143,57 @@ export default function CreateTransaksi() {
     return `LND${year}${month}${day}${random}`;
   };
 
-  const handleLayananChange = (layananId: string) => {
-    const layanan = layananList.find(l => l.id === layananId);
-    setSelectedLayanan(layanan || null);
+  const handleItemLayananChange = (itemId: string, layananId: string) => {
+    const layanan = layananList.find((l) => l.id === layananId) || null;
+    setOrderItems((prev) =>
+      prev.map((item) => (item.id === itemId ? { ...item, layanan } : item))
+    );
   };
+
+  const handleJumlahChange = (itemId: string, jumlah: string) => {
+    if (parseInt(jumlah, 10) < 0) return;
+    setOrderItems((prev) =>
+      prev.map((item) => (item.id === itemId ? { ...item, jumlah } : item))
+    );
+  };
+
+  const handleAddItem = () => {
+    setOrderItems((prev) => [...prev, createEmptyItem()]);
+  };
+
+  const handleRemoveItem = (itemId: string) => {
+    setOrderItems((prev) => prev.filter((item) => item.id !== itemId));
+  };
+
+  const grandTotal = orderItems.reduce((acc, item) => {
+    if (!item.layanan) return acc;
+    const qty = parseInt(item.jumlah || '0', 10);
+    if (Number.isNaN(qty)) return acc;
+    return acc + item.layanan.harga * qty;
+  }, 0);
+
+  const allItemsValid =
+    orderItems.length > 0 &&
+    orderItems.every((item) => item.layanan && parseInt(item.jumlah || '0', 10) > 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!selectedLayanan) {
-      toast.error('Pilih layanan terlebih dahulu');
+    if (!allItemsValid) {
+      toast.error('Pastikan setiap pesanan memiliki layanan dan jumlah yang valid');
       return;
     }
 
     try {
-      const jumlah = parseInt(formData.jumlah);
-      const total = selectedLayanan.harga * jumlah;
       const kodeStruk = generateKodeStruk();
+      const nomorHp = formData.nomor_hp.trim();
 
-      const deadline = new Date();
-      deadline.setHours(deadline.getHours() + selectedLayanan.durasi_pengerjaan_jam);
+      let pelangganId: string | null = null;
 
-      let pelangganId = null;
-      
-      // Cek apakah pelanggan sudah ada berdasarkan nomor HP
       const { data: existingPelanggan, error: errorPelangganCek } = await supabase
         .from('pelanggan')
         .select('id, nama, alamat')
-        .eq('nomor_hp', formData.nomor_hp.trim())
+        .eq('nomor_hp', nomorHp)
         .maybeSingle();
 
       if (errorPelangganCek) {
@@ -177,12 +203,12 @@ export default function CreateTransaksi() {
       }
 
       if (existingPelanggan) {
-        // Pelanggan sudah ada, update data jika ada perubahan
         pelangganId = existingPelanggan.id;
-        
-        // Update jika nama atau alamat berbeda
-        if (existingPelanggan.nama !== formData.nama_pelanggan || 
-            (existingPelanggan.alamat || '') !== formData.alamat) {
+
+        if (
+          existingPelanggan.nama !== formData.nama_pelanggan ||
+          (existingPelanggan.alamat || '') !== formData.alamat
+        ) {
           const { error: errorUpdatePelanggan } = await supabase
             .from('pelanggan')
             .update({
@@ -198,14 +224,15 @@ export default function CreateTransaksi() {
           }
         }
       } else {
-        // Pelanggan belum ada, buat baru
         const { data: newPelanggan, error: errorInsertPelanggan } = await supabase
           .from('pelanggan')
-          .insert([{
-            nama: formData.nama_pelanggan,
-            nomor_hp: formData.nomor_hp.trim(),
-            alamat: formData.alamat,
-          }])
+          .insert([
+            {
+              nama: formData.nama_pelanggan,
+              nomor_hp: nomorHp,
+              alamat: formData.alamat,
+            },
+          ])
           .select()
           .single();
 
@@ -220,35 +247,41 @@ export default function CreateTransaksi() {
         }
       }
 
-      const transaksiData = {
-      kode_struk: kodeStruk,
-      id_pelanggan: pelangganId,
-      id_users: user?.id || null,
-      id_layanan: selectedLayanan.id,
-      nama_layanan: selectedLayanan.nama,
-      nama_pelanggan: formData.nama_pelanggan,
-      alamat_pelanggan: formData.alamat,
-      jumlah: jumlah,
-      harga_layanan: selectedLayanan.harga,
-      total: total,
-      status_transaksi: 'antrian',
-      status_pembayaran: 'belum_lunas',
-      deadline: deadline.toISOString(),
-    };
+      const transaksiPayload = orderItems.map((item) => {
+        const layanan = item.layanan!;
+        const jumlah = parseInt(item.jumlah, 10);
+        const total = layanan.harga * jumlah;
+        const deadline = new Date();
+        deadline.setHours(deadline.getHours() + layanan.durasi_pengerjaan_jam);
 
-      const { data, error } = await supabase
-        .from('transaksi')
-        .insert([transaksiData])
-        .select()
-        .single();
+        return {
+          kode_struk: kodeStruk,
+          id_pelanggan: pelangganId,
+          id_users: user?.id || null,
+          id_layanan: layanan.id,
+          nama_layanan: layanan.nama,
+          nama_pelanggan: formData.nama_pelanggan,
+          alamat_pelanggan: formData.alamat,
+          jumlah,
+          harga_layanan: layanan.harga,
+          total,
+          status_transaksi: 'antrian',
+          status_pembayaran: 'belum_lunas',
+          deadline: deadline.toISOString(),
+        };
+      });
+
+      const { error } = await supabase.from('transaksi').insert(transaksiPayload);
 
       if (error) {
         console.error('Error inserting transaksi:', error);
-        toast.error('Gagal membuat transaksi: ' + error.message);
-      } else {
-        toast.success('Transaksi berhasil dibuat!');
-        router.push(`/struk/${kodeStruk}`);
+        toast.error('Gagal membuat pesanan: ' + error.message);
+        return;
       }
+
+      toast.success('Pesanan berhasil dibuat!');
+      window.dispatchEvent(new Event('transaksi-updated'));
+      router.push(`/struk/${kodeStruk}`);
     } catch (err) {
       console.error('Unexpected error:', err);
       toast.error('Terjadi kesalahan: ' + (err instanceof Error ? err.message : 'Unknown error'));
@@ -257,70 +290,169 @@ export default function CreateTransaksi() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-3xl mx-auto">
-
+      <div className="max-w-4xl mx-auto">
         <Card className="shadow-xl">
           <CardHeader className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white">
-            <CardTitle className="text-2xl">Buat Transaksi Baru</CardTitle>
+            <CardTitle className="text-2xl">Buat Pesanan Baru</CardTitle>
           </CardHeader>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="layanan" className="text-base font-semibold">Pilih Layanan *</Label>
-                  <Select onValueChange={handleLayananChange} required>
-                    <SelectTrigger className="mt-2">
-                      <SelectValue placeholder="Pilih layanan..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {layananList.map((layanan) => (
-                        <SelectItem key={layanan.id} value={layanan.id}>
-                          {layanan.nama} - Rp {layanan.harga.toLocaleString('id-ID')} ({layanan.jenis_layanan}) • {layanan.durasi_pengerjaan_jam} jam
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              <div className="space-y-6">
+                <div className="space-y-6">
+                  {orderItems.map((item, index) => {
+                    const layanan = item.layanan;
+                    const jumlah = parseInt(item.jumlah || '0', 10);
+                    const subtotal =
+                      layanan && !Number.isNaN(jumlah) ? layanan.harga * jumlah : 0;
+
+                    return (
+                      <div
+                        key={item.id}
+                        className="rounded-xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm"
+                      >
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            Pesanan #{index + 1}
+                          </h3>
+                          {orderItems.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveItem(item.id)}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Hapus
+                            </Button>
+                          )}
+                        </div>
+
+                        <div className="mt-4 grid gap-4 md:grid-cols-[1.6fr_1fr]">
+                          <div>
+                            <Label className="text-base font-semibold">Pilih Layanan *</Label>
+                            <Select
+                              value={layanan?.id}
+                              onValueChange={(value) => handleItemLayananChange(item.id, value)}
+                              required
+                            >
+                              <SelectTrigger className="mt-2">
+                                <SelectValue placeholder="Pilih layanan..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {layananList.map((layananOption) => (
+                                  <SelectItem key={layananOption.id} value={layananOption.id}>
+                                    {layananOption.nama} - Rp{' '}
+                                    {layananOption.harga.toLocaleString('id-ID')} (
+                                    {layananOption.jenis_layanan}) •{' '}
+                                    {layananOption.durasi_pengerjaan_jam} jam
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label className="text-base font-semibold">Jumlah *</Label>
+                          <div className="mt-2 flex items-center gap-2">
+                            <Input
+                              type="number"
+                              min="1"
+                              value={item.jumlah}
+                              onChange={(e) => handleJumlahChange(item.id, e.target.value)}
+                              required
+                              className="flex-1"
+                            />
+                            <div className="flex flex-wrap gap-1">
+                              {[1, 2, 3, 4, 5].map((increment) => (
+                                <Button
+                                  key={increment}
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-9 px-2"
+                                  onClick={() => {
+                                    const current = parseInt(item.jumlah || '0', 10);
+                                    const nextValue = Number.isNaN(current)
+                                      ? increment
+                                      : Math.max(1, current + increment);
+                                    handleJumlahChange(item.id, String(nextValue));
+                                  }}
+                                >
+                                  +{increment}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+                          </div>
+                        </div>
+
+                        {layanan && (
+                          <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="flex flex-col">
+                                <span className="text-blue-600 text-xs uppercase tracking-wide">
+                                  Jenis
+                                </span>
+                                <span className="font-semibold uppercase text-blue-900">
+                                  {layanan.jenis_layanan}
+                                </span>
+                              </div>
+                              <div className="flex flex-col text-right">
+                                <span className="text-blue-600 text-xs uppercase tracking-wide">
+                                  Harga
+                                </span>
+                                <span className="font-semibold text-blue-900">
+                                  Rp {layanan.harga.toLocaleString('id-ID')}
+                                </span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-blue-600 text-xs uppercase tracking-wide">
+                                  Durasi
+                                </span>
+                                <span className="font-semibold text-blue-900">
+                                  {layanan.durasi_pengerjaan_jam} jam
+                                </span>
+                              </div>
+                              <div className="flex flex-col text-right">
+                                <span className="text-blue-600 text-xs uppercase tracking-wide">
+                                  Subtotal
+                                </span>
+                                <span className="font-semibold text-blue-900">
+                                  Rp {subtotal.toLocaleString('id-ID')}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAddItem}
+                    className="w-full border-dashed border-2 py-6 text-blue-600 hover:text-blue-700"
+                  >
+                    <PlusCircle className="mr-2 h-5 w-5" />
+                    Tambah Layanan
+                  </Button>
                 </div>
 
-                {selectedLayanan && (
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div>
-                        <span className="text-gray-600">Jenis:</span>
-                        <span className="ml-2 font-semibold">{selectedLayanan.jenis_layanan.toUpperCase()}</span>
-                      </div>
-                      <div>
-                        <span className="text-gray-600">Harga:</span>
-                        <span className="ml-2 font-semibold">Rp {selectedLayanan.harga.toLocaleString('id-ID')}</span>
-                      </div>
-                      <div className="col-span-2">
-                        <span className="text-gray-600">Durasi:</span>
-                        <span className="ml-2 font-semibold">{selectedLayanan.durasi_pengerjaan_jam} jam</span>
-                      </div>
+                {grandTotal > 0 && (
+                  <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold uppercase text-green-700">
+                        Total Estimasi
+                      </span>
+                      <span className="text-2xl font-bold text-green-800">
+                        Rp {grandTotal.toLocaleString('id-ID')}
+                      </span>
                     </div>
-                  </div>
-                )}
-
-                <div>
-                  <Label htmlFor="jumlah" className="text-base font-semibold">
-                    Jumlah ({selectedLayanan?.jenis_layanan === 'kiloan' ? 'Kg' : 'Pcs'}) *
-                  </Label>
-                  <Input
-                    id="jumlah"
-                    type="number"
-                    min="1"
-                    value={formData.jumlah}
-                    onChange={(e) => setFormData({ ...formData, jumlah: e.target.value })}
-                    required
-                    className="mt-2"
-                  />
-                </div>
-
-                {selectedLayanan && (
-                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                    <div className="text-lg font-bold text-green-800">
-                      Total: Rp {(selectedLayanan.harga * parseInt(formData.jumlah || '1')).toLocaleString('id-ID')}
-                    </div>
+                    <p className="mt-1 text-xs text-green-700">
+                      Semua pesanan akan menggunakan kode struk yang sama dan tampil sebagai satu
+                      struk.
+                    </p>
                   </div>
                 )}
 
@@ -336,7 +468,7 @@ export default function CreateTransaksi() {
                           type="tel"
                           value={formData.nomor_hp}
                           onChange={(e) => {
-                            const value = e.target.value.replace(/\D/g, ''); // Hanya angka
+                            const value = e.target.value.replace(/\D/g, '');
                             setFormData({ ...formData, nomor_hp: value });
                           }}
                           required
@@ -352,7 +484,7 @@ export default function CreateTransaksi() {
                       <p className="text-xs text-gray-500 mt-1">
                         Masukkan nomor WhatsApp untuk mengecek apakah pelanggan sudah terdaftar
                       </p>
-                      {formData.nama_pelanggan && (
+                      {formData.nama_pelanggan && formData.nomor_hp.length >= 10 && (
                         <p className="text-xs text-green-600 mt-1 flex items-center gap-1 font-medium">
                           <CheckCircle2 className="h-3 w-3" />
                           Pelanggan ditemukan: {formData.nama_pelanggan}
@@ -402,8 +534,9 @@ export default function CreateTransaksi() {
                 <Button
                   type="submit"
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white h-12 text-lg"
+                  disabled={!allItemsValid}
                 >
-                  Buat Transaksi
+                  Buat Pesanan
                 </Button>
                 <Button
                   type="button"

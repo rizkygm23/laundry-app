@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { CheckCircle2, Clock, Package } from 'lucide-react';
 import { format } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
 
-interface Transaksi {
+interface TransaksiRow {
+  id: string;
   kode_struk: string;
   nama_pelanggan: string;
   nama_layanan: string;
@@ -21,18 +23,20 @@ interface Transaksi {
 }
 
 export default function StatusPage({ params }: { params: { kode: string } }) {
-  const [transaksi, setTransaksi] = useState<Transaksi | null>(null);
+  const [transaksiList, setTransaksiList] = useState<TransaksiRow[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     loadTransaksi();
 
     const channel = supabase
-      .channel('transaksi-changes')
+      .channel('status-transaksi')
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
           table: 'transaksi',
           filter: `kode_struk=eq.${params.kode}`,
@@ -49,14 +53,34 @@ export default function StatusPage({ params }: { params: { kode: string } }) {
   }, [params.kode]);
 
   const loadTransaksi = async () => {
+    setLoading(true);
     const { data, error } = await supabase
       .from('transaksi')
-      .select('*')
+      .select(
+        'id,kode_struk,nama_pelanggan,nama_layanan,jumlah,total,status_transaksi,status_pembayaran,deadline,created_at'
+      )
       .eq('kode_struk', params.kode)
-      .maybeSingle();
+      .order('created_at', { ascending: true });
 
-    if (data) {
-      setTransaksi(data);
+    if (error) {
+      console.error('Gagal memuat transaksi:', error);
+      setErrorMessage('Gagal memuat data pesanan. Coba beberapa saat lagi.');
+      setTransaksiList([]);
+      setSelectedId(null);
+    } else if (data && data.length > 0) {
+      const result = data as TransaksiRow[];
+      setErrorMessage(null);
+      setTransaksiList(result);
+      setSelectedId((prev) => {
+        if (prev && result.some((item) => item.id === prev)) {
+          return prev;
+        }
+        return result[0].id;
+      });
+    } else {
+      setErrorMessage('Kode struk tidak valid atau pesanan telah dihapus.');
+      setTransaksiList([]);
+      setSelectedId(null);
     }
     setLoading(false);
   };
@@ -105,19 +129,24 @@ export default function StatusPage({ params }: { params: { kode: string } }) {
     );
   }
 
-  if (!transaksi) {
+  if (!loading && !transaksiList.length) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
         <Card className="max-w-md w-full mx-4">
           <CardContent className="p-8 text-center">
             <div className="text-red-600 text-6xl mb-4">⚠️</div>
             <h2 className="text-2xl font-bold mb-2">Transaksi Tidak Ditemukan</h2>
-            <p className="text-gray-600">Kode struk tidak valid atau transaksi sudah dihapus.</p>
+            <p className="text-gray-600">
+              {errorMessage || 'Kode struk tidak valid atau transaksi sudah dihapus.'}
+            </p>
           </CardContent>
         </Card>
       </div>
     );
   }
+
+  const transaksi =
+    transaksiList.find((item) => item.id === selectedId) ?? transaksiList[0];
 
   const statusInfo = getStatusInfo(transaksi.status_transaksi);
   const StatusIcon = statusInfo.icon;
@@ -128,6 +157,58 @@ export default function StatusPage({ params }: { params: { kode: string } }) {
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Status Pesanan</h1>
           <p className="text-gray-600">Lacak status laundry Anda secara real-time</p>
+        </div>
+
+        {transaksiList.length > 1 && (
+          <Card className="shadow-md mb-6">
+            <CardHeader>
+              <CardTitle className="text-lg text-gray-800">
+                Pilih layanan yang ingin dicek statusnya
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid gap-3 md:grid-cols-2">
+                {transaksiList.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setSelectedId(item.id)}
+                    className={`rounded-xl border p-4 text-left transition ${
+                      item.id === transaksi.id
+                        ? 'border-blue-500 bg-blue-50 shadow-md'
+                        : 'border-gray-200 bg-white hover:border-blue-300'
+                    }`}
+                  >
+                    <div className="text-sm text-gray-500">Layanan</div>
+                    <div className="font-semibold text-gray-900">{item.nama_layanan}</div>
+                    <div className="mt-2 flex items-center justify-between text-sm text-gray-600">
+                      <span>Jumlah: {item.jumlah}</span>
+                      <Badge
+                        variant="outline"
+                        className={item.status_pembayaran === 'lunas'
+                          ? 'bg-green-100 text-green-800 border-green-300'
+                          : 'bg-red-100 text-red-800 border-red-300'}
+                      >
+                        {item.status_pembayaran === 'lunas' ? 'Lunas' : 'Belum Lunas'}
+                      </Badge>
+                    </div>
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-gray-500">
+                Setiap layanan dalam struk ini memiliki status pengerjaan masing-masing.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        <div className="no-print mb-4 flex justify-end">
+          <Button
+            variant="outline"
+            onClick={() => window.open(`/struk/${transaksi.kode_struk}`, '_blank')}
+            className="w-full sm:w-auto"
+          >
+            Cetak Struk
+          </Button>
         </div>
 
         <Card className="shadow-xl mb-6">

@@ -20,7 +20,6 @@ interface TransaksiSearchProps {
 
 export function TransaksiSearch({ onSearch, onClear }: TransaksiSearchProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchType, setSearchType] = useState<'nama' | 'kode'>('nama');
   const [qrScannerOpen, setQrScannerOpen] = useState(false);
   const [scanning, setScanning] = useState(false);
   const qrCodeRef = useRef<Html5Qrcode | null>(null);
@@ -38,7 +37,7 @@ export function TransaksiSearch({ onSearch, onClear }: TransaksiSearchProps) {
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
-      onSearch(searchQuery.trim(), searchType);
+      onSearch(searchQuery.trim(), 'nama');
     }
   };
 
@@ -126,16 +125,12 @@ export function TransaksiSearch({ onSearch, onClear }: TransaksiSearchProps) {
 
   return (
     <>
-      <div className="flex gap-2 mb-4">
-        <div className="flex-1 flex gap-2">
-          <div className="flex-1 relative">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center mb-4">
+        <div className="flex-1 flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              placeholder={
-                searchType === 'nama'
-                  ? 'Cari berdasarkan nama pelanggan...'
-                  : 'Cari berdasarkan kode transaksi...'
-              }
+              placeholder="Cari nama atau kode pesanan..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => {
@@ -147,28 +142,26 @@ export function TransaksiSearch({ onSearch, onClear }: TransaksiSearchProps) {
             />
           </div>
           <Button
-            variant="outline"
-            onClick={() => setSearchType(searchType === 'nama' ? 'kode' : 'nama')}
-            className="whitespace-nowrap"
-          >
-            {searchType === 'nama' ? 'Kode' : 'Nama'}
-          </Button>
-          <Button
             onClick={handleSearch}
             className="bg-blue-600 hover:bg-blue-700 text-white"
           >
             <Search className="h-4 w-4" />
           </Button>
           {searchQuery && (
-            <Button variant="outline" onClick={handleClear}>
+            <Button
+              variant="outline"
+              onClick={handleClear}
+              className="flex items-center gap-2"
+            >
               <X className="h-4 w-4" />
+              <span>Reset</span>
             </Button>
           )}
         </div>
         <Button
           variant="outline"
           onClick={() => setQrScannerOpen(true)}
-          className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+          className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200 w-full sm:w-auto"
         >
           <QrCode className="h-4 w-4 mr-2" />
           Scan QR
@@ -204,7 +197,7 @@ export function TransaksiSearch({ onSearch, onClear }: TransaksiSearchProps) {
               </Button>
             )}
             <p className="text-sm text-gray-500 text-center">
-              Arahkan kamera ke QR Code pada struk transaksi
+              Arahkan kamera ke QR Code pada struk pesanan
             </p>
           </div>
         </DialogContent>
