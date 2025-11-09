@@ -401,18 +401,20 @@ export default function TransaksiList({
   );
 
   const renderCardsView = () => (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 text-sm">
       {transaksiList.map((transaksi) => {
         const accentClass = cardAccent[transaksi.status_transaksi] || cardAccent.default;
         const deadlineDate = new Date(transaksi.deadline);
-        const diffHours = Math.max(
-          0,
-          Math.floor(Math.abs(deadlineDate.getTime() - Date.now()) / (1000 * 60 * 60))
-        );
-        const isLate = deadlineDate.getTime() < Date.now();
-        const deadlineLabel = isLate
-          ? `Est. Selesai Terlambat ${diffHours} Jam`
-          : `Est. Selesai ${diffHours === 0 ? 'Kurang dari 1 Jam' : `${diffHours} Jam Lagi`}`;
+    const diffMs = deadlineDate.getTime() - Date.now();
+    const diffHours = Math.max(0, Math.floor(Math.abs(diffMs) / (1000 * 60 * 60)));
+    const diffMinutes = Math.max(
+      0,
+      Math.floor((Math.abs(diffMs) % (1000 * 60 * 60)) / (1000 * 60))
+    );
+    const isLate = diffMs < 0;
+    const deadlineLabel = isLate
+      ? `Terlambat ${diffHours}j ${diffMinutes}m`
+      : `Selesai ${diffHours}j ${diffMinutes}m lagi`;
 
         return (
           <Card
@@ -429,12 +431,12 @@ export default function TransaksiList({
                   <p className="text-sm font-semibold text-gray-900 truncate">
                     {transaksi.nama_pelanggan}
                   </p>
-                  <p className="text-xs text-gray-600 truncate">
+                  <p className="text-[11px] text-gray-600 truncate">
                     {transaksi.jumlah} x {transaksi.nama_layanan}
                   </p>
                   <p
                     className={cn(
-                      'text-xs',
+                      'text-[11px]',
                       isLate ? 'text-red-600 font-medium' : 'text-gray-500 font-medium'
                     )}
                   >

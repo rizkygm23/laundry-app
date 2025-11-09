@@ -31,10 +31,10 @@ export default function Home() {
     <DashboardLayout>
       <div className="space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-sm md:text-base">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Operasional Pesanan</h1>
-            <p className="text-gray-600 mt-1 text-sm sm:text-base">Pantau dan kelola pesanan aktif</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Operasional Pesanan</h1>
+            <p className="text-gray-600 mt-1 text-xs sm:text-sm">Pantau dan kelola pesanan aktif</p>
           </div>
           <Link href="/transaksi/create">
             <Button className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto">
