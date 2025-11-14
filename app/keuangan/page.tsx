@@ -534,7 +534,7 @@ export default function KeuanganPage() {
                     Object.entries(transaksiByDate)
                       .sort((a, b) => b[0].localeCompare(a[0]))
                       .slice(0, 10) // Limit to 10 most recent for mobile
-                      .map(([date, transactions]) => {
+                      .map(([date, transactions]: [string, any[]]) => {
                         const total = transactions.reduce((sum, t) => sum + t.total, 0);
                         return (
                           <div key={date} className="flex justify-between items-center p-2 sm:p-3 border rounded-lg hover:bg-gray-50">
