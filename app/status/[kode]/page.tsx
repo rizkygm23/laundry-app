@@ -152,41 +152,41 @@ export default function StatusPage({ params }: { params: { kode: string } }) {
   const StatusIcon = statusInfo.icon;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 py-8">
-      <div className="container mx-auto px-4 max-w-2xl">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Status Pesanan</h1>
-          <p className="text-gray-600">Lacak status laundry Anda secara real-time</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 py-4 sm:py-8">
+      <div className="container mx-auto px-3 sm:px-4 max-w-2xl">
+        <div className="text-center mb-4 sm:mb-8">
+          <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2">Status Pesanan</h1>
+          <p className="text-sm sm:text-base text-gray-600">Lacak status laundry Anda secara real-time</p>
         </div>
 
         {transaksiList.length > 1 && (
-          <Card className="shadow-md mb-6">
-            <CardHeader>
-              <CardTitle className="text-lg text-gray-800">
+          <Card className="shadow-md mb-4 sm:mb-6">
+            <CardHeader className="p-3 sm:p-6">
+              <CardTitle className="text-base sm:text-lg text-gray-800">
                 Pilih layanan yang ingin dicek statusnya
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid gap-3 md:grid-cols-2">
+            <CardContent className="space-y-3 p-3 sm:p-6">
+              <div className="grid gap-2 sm:gap-3 grid-cols-1 md:grid-cols-2">
                 {transaksiList.map((item) => (
                   <button
                     key={item.id}
                     onClick={() => setSelectedId(item.id)}
-                    className={`rounded-xl border p-4 text-left transition ${
+                    className={`rounded-xl border p-3 sm:p-4 text-left transition ${
                       item.id === transaksi.id
                         ? 'border-blue-500 bg-blue-50 shadow-md'
                         : 'border-gray-200 bg-white hover:border-blue-300'
                     }`}
                   >
-                    <div className="text-sm text-gray-500">Layanan</div>
-                    <div className="font-semibold text-gray-900">{item.nama_layanan}</div>
-                    <div className="mt-2 flex items-center justify-between text-sm text-gray-600">
+                    <div className="text-xs sm:text-sm text-gray-500">Layanan</div>
+                    <div className="font-semibold text-sm sm:text-base text-gray-900">{item.nama_layanan}</div>
+                    <div className="mt-2 flex items-center justify-between text-xs sm:text-sm text-gray-600">
                       <span>Jumlah: {item.jumlah}</span>
                       <Badge
                         variant="outline"
-                        className={item.status_pembayaran === 'lunas'
+                        className={`text-[10px] sm:text-xs ${item.status_pembayaran === 'lunas'
                           ? 'bg-green-100 text-green-800 border-green-300'
-                          : 'bg-red-100 text-red-800 border-red-300'}
+                          : 'bg-red-100 text-red-800 border-red-300'}`}
                       >
                         {item.status_pembayaran === 'lunas' ? 'Lunas' : 'Belum Lunas'}
                       </Badge>
@@ -194,83 +194,83 @@ export default function StatusPage({ params }: { params: { kode: string } }) {
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-[10px] sm:text-xs text-gray-500">
                 Setiap layanan dalam struk ini memiliki status pengerjaan masing-masing.
               </p>
             </CardContent>
           </Card>
         )}
 
-        <div className="no-print mb-4 flex justify-end">
+        <div className="no-print mb-3 sm:mb-4 flex justify-end">
           <Button
             variant="outline"
             onClick={() => window.open(`/struk/${transaksi.kode_struk}`, '_blank')}
-            className="w-full sm:w-auto"
+            className="w-full sm:w-auto h-11 sm:h-10"
           >
             Cetak Struk
           </Button>
         </div>
 
-        <Card className="shadow-xl mb-6">
-          <CardHeader className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white">
+        <Card className="shadow-xl mb-4 sm:mb-6">
+          <CardHeader className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-4 sm:p-6">
             <CardTitle className="text-center">
-              <div className="text-sm opacity-90 mb-1">Kode Transaksi</div>
-              <div className="text-3xl font-mono font-bold">{transaksi.kode_struk}</div>
+              <div className="text-xs sm:text-sm opacity-90 mb-1">Kode Transaksi</div>
+              <div className="text-xl sm:text-3xl font-mono font-bold break-all">{transaksi.kode_struk}</div>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-6">
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-blue-100 to-cyan-100 mb-4">
-                <StatusIcon className="w-12 h-12 text-blue-600" />
+          <CardContent className="p-4 sm:p-6">
+            <div className="text-center mb-6 sm:mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-blue-100 to-cyan-100 mb-3 sm:mb-4">
+                <StatusIcon className="w-8 h-8 sm:w-12 sm:h-12 text-blue-600" />
               </div>
-              <Badge variant="outline" className={`text-lg px-6 py-2 ${statusInfo.color}`}>
+              <Badge variant="outline" className={`text-sm sm:text-lg px-4 sm:px-6 py-1 sm:py-2 ${statusInfo.color}`}>
                 {statusInfo.label}
               </Badge>
-              <p className="text-gray-600 mt-2">{statusInfo.description}</p>
+              <p className="text-xs sm:text-sm text-gray-600 mt-2">{statusInfo.description}</p>
             </div>
 
-            <div className="space-y-3 mb-6">
-              <div className="flex justify-between py-3 border-b">
+            <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-6">
+              <div className="flex justify-between py-2 sm:py-3 border-b text-xs sm:text-sm">
                 <span className="text-gray-600">Nama Pelanggan</span>
-                <span className="font-semibold">{transaksi.nama_pelanggan}</span>
+                <span className="font-semibold text-right break-words ml-2">{transaksi.nama_pelanggan}</span>
               </div>
-              <div className="flex justify-between py-3 border-b">
+              <div className="flex justify-between py-2 sm:py-3 border-b text-xs sm:text-sm">
                 <span className="text-gray-600">Layanan</span>
-                <span className="font-semibold">{transaksi.nama_layanan}</span>
+                <span className="font-semibold text-right break-words ml-2">{transaksi.nama_layanan}</span>
               </div>
-              <div className="flex justify-between py-3 border-b">
+              <div className="flex justify-between py-2 sm:py-3 border-b text-xs sm:text-sm">
                 <span className="text-gray-600">Jumlah</span>
                 <span className="font-semibold">{transaksi.jumlah}</span>
               </div>
-              <div className="flex justify-between py-3 border-b">
+              <div className="flex justify-between py-2 sm:py-3 border-b text-xs sm:text-sm">
                 <span className="text-gray-600">Total Biaya</span>
-                <span className="font-semibold text-lg text-blue-600">
+                <span className="font-semibold text-base sm:text-lg text-blue-600">
                   Rp {transaksi.total.toLocaleString('id-ID')}
                 </span>
               </div>
             </div>
 
-            <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-              <div className="flex justify-between text-sm">
+            <div className="bg-gray-50 rounded-lg p-3 sm:p-4 space-y-2">
+              <div className="flex justify-between text-xs sm:text-sm">
                 <span className="text-gray-600">Tanggal Order</span>
-                <span className="font-medium">
+                <span className="font-medium text-right break-words ml-2">
                   {format(new Date(transaksi.created_at), 'dd MMMM yyyy HH:mm', { locale: idLocale })}
                 </span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-xs sm:text-sm">
                 <span className="text-gray-600">Estimasi Selesai</span>
-                <span className="font-medium">
+                <span className="font-medium text-right break-words ml-2">
                   {format(new Date(transaksi.deadline), 'dd MMMM yyyy HH:mm', { locale: idLocale })}
                 </span>
               </div>
-              <div className="flex justify-between text-sm">
+              <div className="flex justify-between text-xs sm:text-sm">
                 <span className="text-gray-600">Status Pembayaran</span>
                 <Badge
                   variant="outline"
-                  className={transaksi.status_pembayaran === 'lunas'
+                  className={`text-[10px] sm:text-xs ${transaksi.status_pembayaran === 'lunas'
                     ? 'bg-green-100 text-green-800 border-green-300'
                     : 'bg-red-100 text-red-800 border-red-300'
-                  }
+                  }`}
                 >
                   {transaksi.status_pembayaran === 'lunas' ? 'LUNAS' : 'BELUM LUNAS'}
                 </Badge>
@@ -280,8 +280,8 @@ export default function StatusPage({ params }: { params: { kode: string } }) {
         </Card>
 
         <Card className="bg-blue-50 border-blue-200">
-          <CardContent className="p-6 text-center">
-            <p className="text-sm text-gray-600">
+          <CardContent className="p-4 sm:p-6 text-center">
+            <p className="text-xs sm:text-sm text-gray-600">
               Halaman ini akan otomatis terupdate saat status pesanan berubah
             </p>
           </CardContent>

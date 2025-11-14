@@ -36,6 +36,7 @@ import {
   User,
   Clock3,
   ChevronRight,
+  FileImage,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
@@ -56,6 +57,8 @@ export interface Transaksi {
   created_at: string;
   nomor_hp?: string;
   alamat_pelanggan?: string;
+  metode_pembayaran?: string;
+  bukti_pembayaran_url?: string;
 }
 
 interface TransaksiListProps {
@@ -88,6 +91,8 @@ export default function TransaksiList({
   const [actionModalOpen, setActionModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [selectedTransaksiForPayment, setSelectedTransaksiForPayment] = useState<Transaksi | null>(null);
+  const [proofModalOpen, setProofModalOpen] = useState(false);
+  const [selectedProofUrl, setSelectedProofUrl] = useState<string | null>(null);
 
   const loadTransaksi = useCallback(async () => {
     setLoading(true);
@@ -364,54 +369,74 @@ export default function TransaksiList({
   };
 
   const renderTableView = () => (
-    <div className="rounded-md border">
+    <div className="rounded-md border overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow className="bg-gray-50">
-            <TableHead className="font-semibold">Kode</TableHead>
-            <TableHead className="font-semibold">Pelanggan</TableHead>
-            <TableHead className="font-semibold">Layanan</TableHead>
-            <TableHead className="font-semibold">Jumlah</TableHead>
-            <TableHead className="font-semibold">Total</TableHead>
-            <TableHead className="font-semibold">Status</TableHead>
-            <TableHead className="font-semibold">Pembayaran</TableHead>
-            <TableHead className="font-semibold">Deadline</TableHead>
-            <TableHead className="font-semibold text-right">Aksi</TableHead>
+            <TableHead className="font-semibold text-xs sm:text-sm">Kode</TableHead>
+            <TableHead className="font-semibold text-xs sm:text-sm">Pelanggan</TableHead>
+            <TableHead className="font-semibold text-xs sm:text-sm hidden md:table-cell">Layanan</TableHead>
+            <TableHead className="font-semibold text-xs sm:text-sm hidden lg:table-cell">Jumlah</TableHead>
+            <TableHead className="font-semibold text-xs sm:text-sm">Total</TableHead>
+              <TableHead className="font-semibold text-xs sm:text-sm">Status</TableHead>
+              <TableHead className="font-semibold text-xs sm:text-sm hidden md:table-cell">Pembayaran</TableHead>
+              <TableHead className="font-semibold text-xs sm:text-sm hidden lg:table-cell">Deadline</TableHead>
+              <TableHead className="font-semibold text-xs sm:text-sm hidden lg:table-cell">Bukti</TableHead>
+              <TableHead className="font-semibold text-right text-xs sm:text-sm">Aksi</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {transaksiList.map((transaksi) => (
             <TableRow key={transaksi.id} className="hover:bg-gray-50">
-              <TableCell className="font-mono font-medium">{transaksi.kode_struk}</TableCell>
-              <TableCell>{transaksi.nama_pelanggan}</TableCell>
-              <TableCell>{transaksi.nama_layanan}</TableCell>
-              <TableCell>{transaksi.jumlah}</TableCell>
-              <TableCell className="font-semibold">
+              <TableCell className="font-mono font-medium text-xs sm:text-sm">{transaksi.kode_struk}</TableCell>
+              <TableCell className="text-xs sm:text-sm">{transaksi.nama_pelanggan}</TableCell>
+              <TableCell className="hidden md:table-cell text-xs sm:text-sm">{transaksi.nama_layanan}</TableCell>
+              <TableCell className="hidden lg:table-cell text-xs sm:text-sm">{transaksi.jumlah}</TableCell>
+              <TableCell className="font-semibold text-xs sm:text-sm">
                 Rp {transaksi.total.toLocaleString('id-ID')}
               </TableCell>
               <TableCell>
-                <Badge variant="outline" className={getStatusColor(transaksi.status_transaksi)}>
+                <Badge variant="outline" className={`text-[10px] sm:text-xs ${getStatusColor(transaksi.status_transaksi)}`}>
                   {transaksi.status_transaksi.toUpperCase()}
                 </Badge>
               </TableCell>
-              <TableCell>
-                <Badge variant="outline" className={getPembayaranColor(transaksi.status_pembayaran)}>
+              <TableCell className="hidden md:table-cell">
+                <Badge variant="outline" className={`text-[10px] sm:text-xs ${getPembayaranColor(transaksi.status_pembayaran)}`}>
                   {transaksi.status_pembayaran === 'lunas' ? 'LUNAS' : 'BELUM LUNAS'}
                 </Badge>
               </TableCell>
-              <TableCell>
-                <div className="flex items-center">
+              <TableCell className="hidden lg:table-cell">
+                <div className="flex items-center text-xs sm:text-sm">
                   <span className={getDeadlineStyle(transaksi.deadline, transaksi.status_transaksi)}>
                     {format(new Date(transaksi.deadline), 'dd MMM yyyy HH:mm', { locale: idLocale })}
                   </span>
                   {getDeadlineBadge(transaksi.deadline, transaksi.status_transaksi)}
                 </div>
               </TableCell>
+              <TableCell className="hidden lg:table-cell">
+                {transaksi.bukti_pembayaran_url ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedProofUrl(transaksi.bukti_pembayaran_url || null);
+                      setProofModalOpen(true);
+                    }}
+                    className="h-8 text-blue-600 hover:text-blue-700"
+                  >
+                    <FileImage className="h-4 w-4 mr-1" />
+                    Lihat
+                  </Button>
+                ) : (
+                  <span className="text-xs text-gray-400">-</span>
+                )}
+              </TableCell>
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                      <MoreHorizontal className="h-4 w-4" />
+                    <Button variant="ghost" className="h-7 w-7 sm:h-8 sm:w-8 p-0">
+                      <MoreHorizontal className="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
@@ -556,67 +581,92 @@ export default function TransaksiList({
               }
             }}
           >
-            <DialogContent className="sm:max-w-lg">
+            <DialogContent className="w-[95vw] max-w-lg max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Kelola Pesanan</DialogTitle>
+                <DialogTitle className="text-lg sm:text-xl">Kelola Pesanan</DialogTitle>
               </DialogHeader>
               {activeTransaksi && (
-                <div className="space-y-5">
-                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-2">
+                <div className="space-y-4 sm:space-y-5">
+                  <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 sm:p-4 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-600">Kode</span>
-                      <span className="font-mono text-lg font-semibold text-gray-900">
+                      <span className="text-xs sm:text-sm font-medium text-gray-600">Kode</span>
+                      <span className="font-mono text-sm sm:text-lg font-semibold text-gray-900 break-all text-right ml-2">
                         {activeTransaksi.kode_struk}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between text-sm text-gray-600">
+                    <div className="flex items-center justify-between text-xs sm:text-sm text-gray-600">
                       <span>Pelanggan</span>
-                      <span className="font-semibold text-gray-900">
+                      <span className="font-semibold text-gray-900 text-right break-words ml-2">
                         {activeTransaksi.nama_pelanggan}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between text-sm text-gray-600">
+                    <div className="flex items-center justify-between text-xs sm:text-sm text-gray-600">
                       <span>Layanan</span>
-                      <span className="font-semibold text-gray-900">
+                      <span className="font-semibold text-gray-900 text-right break-words ml-2">
                         {activeTransaksi.nama_layanan} &middot; {activeTransaksi.jumlah}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between text-sm text-gray-600">
+                    <div className="flex items-center justify-between text-xs sm:text-sm text-gray-600">
                       <span>Total</span>
                       <span className="font-semibold text-gray-900">
                         Rp {activeTransaksi.total.toLocaleString('id-ID')}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between text-sm text-gray-600">
+                    <div className="flex items-center justify-between text-xs sm:text-sm text-gray-600">
                       <span>Status</span>
                       <Badge
                         variant="outline"
-                        className={getStatusColor(activeTransaksi.status_transaksi)}
+                        className={`text-[10px] sm:text-xs ${getStatusColor(activeTransaksi.status_transaksi)}`}
                       >
                         {activeTransaksi.status_transaksi.toUpperCase()}
                       </Badge>
                     </div>
-                    <div className="flex items-center justify-between text-sm text-gray-600">
+                    <div className="flex items-center justify-between text-xs sm:text-sm text-gray-600">
                       <span>Pembayaran</span>
                       <Badge
                         variant="outline"
-                        className={getPembayaranColor(activeTransaksi.status_pembayaran)}
+                        className={`text-[10px] sm:text-xs ${getPembayaranColor(activeTransaksi.status_pembayaran)}`}
                       >
                         {activeTransaksi.status_pembayaran === 'lunas' ? 'LUNAS' : 'BELUM LUNAS'}
                       </Badge>
                     </div>
+                    {activeTransaksi.metode_pembayaran && (
+                      <div className="flex items-center justify-between text-xs sm:text-sm text-gray-600">
+                        <span>Metode</span>
+                        <span className="font-semibold text-gray-900 capitalize text-right break-words ml-2">
+                          {activeTransaksi.metode_pembayaran.replace('_', ' ')}
+                        </span>
+                      </div>
+                    )}
+                    {activeTransaksi.bukti_pembayaran_url && (
+                      <div className="flex items-center justify-between text-xs sm:text-sm text-gray-600">
+                        <span>Bukti Pembayaran</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedProofUrl(activeTransaksi.bukti_pembayaran_url || null);
+                            setProofModalOpen(true);
+                          }}
+                          className="h-8 sm:h-9 text-blue-600 hover:text-blue-700 text-xs sm:text-sm"
+                        >
+                          <FileImage className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                          Lihat Bukti
+                        </Button>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <Button variant="outline" onClick={() => handleNavigate(`/transaksi/${activeTransaksi.id}`)}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <Button variant="outline" onClick={() => handleNavigate(`/transaksi/${activeTransaksi.id}`)} className="h-11 sm:h-10 text-sm">
                       <Eye className="mr-2 h-4 w-4" />
                       Lihat Detail
                     </Button>
-                    <Button variant="outline" onClick={() => handleNavigate(`/struk/${activeTransaksi.kode_struk}`)}>
+                    <Button variant="outline" onClick={() => handleNavigate(`/struk/${activeTransaksi.kode_struk}`)} className="h-11 sm:h-10 text-sm">
                       <Printer className="mr-2 h-4 w-4" />
                       Cetak Struk
                     </Button>
-                    <Button variant="outline" onClick={() => handleNavigate(`/qr/${activeTransaksi.kode_struk}`)}>
+                    <Button variant="outline" onClick={() => handleNavigate(`/qr/${activeTransaksi.kode_struk}`)} className="h-11 sm:h-10 text-sm">
                       <QrCode className="mr-2 h-4 w-4" />
                       Lihat QR
                     </Button>
@@ -627,23 +677,98 @@ export default function TransaksiList({
                         setPaymentModalOpen(true);
                         closeActionModal();
                       }}
+                      className="h-11 sm:h-10 text-sm"
                     >
                       Tandai Lunas
                     </Button>
-                    <Button variant="outline" onClick={() => updateStatus(activeTransaksi.id, 'antrian')}>
+                    <Button variant="outline" onClick={() => updateStatus(activeTransaksi.id, 'antrian')} className="h-11 sm:h-10 text-sm">
                       Set Antrian
                     </Button>
-                    <Button variant="outline" onClick={() => updateStatus(activeTransaksi.id, 'proses')}>
+                    <Button variant="outline" onClick={() => updateStatus(activeTransaksi.id, 'proses')} className="h-11 sm:h-10 text-sm">
                       Set Proses
                     </Button>
-                    <Button variant="outline" onClick={() => updateStatus(activeTransaksi.id, 'selesai')}>
+                    <Button variant="outline" onClick={() => updateStatus(activeTransaksi.id, 'selesai')} className="h-11 sm:h-10 text-sm">
                       Set Selesai
                     </Button>
-                    <Button variant="destructive" onClick={handleDeleteFromModal}>
+                    <Button variant="destructive" onClick={handleDeleteFromModal} className="h-11 sm:h-10 text-sm">
                       <Trash2 className="mr-2 h-4 w-4" />
                       Hapus Pesanan
                     </Button>
                   </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+
+          {/* Proof Modal */}
+          <Dialog open={proofModalOpen} onOpenChange={setProofModalOpen}>
+            <DialogContent className="sm:max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Bukti Pembayaran</DialogTitle>
+              </DialogHeader>
+              {selectedProofUrl && (
+                <div className="space-y-4">
+                  {selectedProofUrl.toLowerCase().endsWith('.pdf') ? (
+                    <div className="border rounded-lg p-4 bg-gray-50">
+                      <iframe
+                        src={selectedProofUrl}
+                        className="w-full h-[600px] rounded"
+                        title="Bukti Pembayaran PDF"
+                      />
+                      <div className="mt-4 flex gap-3">
+                        <Button
+                          variant="outline"
+                          onClick={() => window.open(selectedProofUrl, '_blank')}
+                          className="flex-1"
+                        >
+                          Buka di Tab Baru
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            const link = document.createElement('a');
+                            link.href = selectedProofUrl;
+                            link.download = 'bukti-pembayaran.pdf';
+                            link.click();
+                          }}
+                          className="flex-1"
+                        >
+                          Download
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="border rounded-lg overflow-hidden">
+                        <img
+                          src={selectedProofUrl}
+                          alt="Bukti Pembayaran"
+                          className="w-full h-auto max-h-[600px] object-contain"
+                        />
+                      </div>
+                      <div className="flex gap-3">
+                        <Button
+                          variant="outline"
+                          onClick={() => window.open(selectedProofUrl, '_blank')}
+                          className="flex-1"
+                        >
+                          Buka di Tab Baru
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            const link = document.createElement('a');
+                            link.href = selectedProofUrl;
+                            link.download = 'bukti-pembayaran.jpg';
+                            link.click();
+                          }}
+                          className="flex-1"
+                        >
+                          Download
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </DialogContent>

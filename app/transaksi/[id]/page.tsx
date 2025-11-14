@@ -64,29 +64,29 @@ export default function TransaksiDetailPage({ params }: { params: { id: string }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 py-4 sm:py-8">
       <div className="container mx-auto px-4 max-w-3xl">
-        <Button variant="ghost" onClick={() => router.push('/')} className="mb-6">
+        <Button variant="ghost" onClick={() => router.push('/')} className="mb-4 sm:mb-6 w-full sm:w-auto">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Kembali
         </Button>
 
         <Card className="shadow-xl">
           <CardHeader className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white">
-            <CardTitle className="text-2xl">Detail Transaksi</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl">Detail Transaksi</CardTitle>
           </CardHeader>
-          <CardContent className="p-6">
-            <div className="mb-6 flex justify-between items-start">
+          <CardContent className="p-4 sm:p-6">
+            <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row justify-between items-start gap-3">
               <div>
-                <div className="text-sm text-gray-600 mb-1">Kode Transaksi</div>
-                <div className="text-2xl font-mono font-bold">{transaksi.kode_struk}</div>
+                <div className="text-xs sm:text-sm text-gray-600 mb-1">Kode Transaksi</div>
+                <div className="text-lg sm:text-2xl font-mono font-bold break-all">{transaksi.kode_struk}</div>
               </div>
-              <Badge variant="outline" className={`text-lg px-4 py-2 ${getStatusColor(transaksi.status_transaksi)}`}>
+              <Badge variant="outline" className={`text-sm sm:text-lg px-3 sm:px-4 py-1 sm:py-2 ${getStatusColor(transaksi.status_transaksi)}`}>
                 {transaksi.status_transaksi.toUpperCase()}
               </Badge>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-6 mb-6">
+            <div className="grid md:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg border-b pb-2">Informasi Pelanggan</h3>
                 <div>
@@ -128,28 +128,28 @@ export default function TransaksiDetailPage({ params }: { params: { id: string }
               </div>
             </div>
 
-            <div className="bg-gray-50 rounded-lg p-4 mb-6">
-              <div className="grid md:grid-cols-3 gap-4">
+            <div className="bg-gray-50 rounded-lg p-3 sm:p-4 mb-4 sm:mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                 <div>
-                  <div className="text-sm text-gray-600">Tanggal Order</div>
-                  <div className="font-medium">
+                  <div className="text-xs sm:text-sm text-gray-600">Tanggal Order</div>
+                  <div className="font-medium text-xs sm:text-sm">
                     {format(new Date(transaksi.created_at), 'dd MMM yyyy HH:mm', { locale: idLocale })}
                   </div>
                 </div>
                 <div>
-                  <div className="text-sm text-gray-600">Estimasi Selesai</div>
-                  <div className="font-medium">
+                  <div className="text-xs sm:text-sm text-gray-600">Estimasi Selesai</div>
+                  <div className="font-medium text-xs sm:text-sm">
                     {format(new Date(transaksi.deadline), 'dd MMM yyyy HH:mm', { locale: idLocale })}
                   </div>
                 </div>
-                <div>
-                  <div className="text-sm text-gray-600">Status Pembayaran</div>
+                <div className="sm:col-span-2 md:col-span-1">
+                  <div className="text-xs sm:text-sm text-gray-600">Status Pembayaran</div>
                   <Badge
                     variant="outline"
-                    className={transaksi.status_pembayaran === 'lunas'
+                    className={`text-xs sm:text-sm ${transaksi.status_pembayaran === 'lunas'
                       ? 'bg-green-100 text-green-800 border-green-300'
                       : 'bg-red-100 text-red-800 border-red-300'
-                    }
+                    }`}
                   >
                     {transaksi.status_pembayaran === 'lunas' ? 'LUNAS' : 'BELUM LUNAS'}
                   </Badge>
@@ -157,10 +157,10 @@ export default function TransaksiDetailPage({ params }: { params: { id: string }
               </div>
             </div>
 
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <Button
                 onClick={() => router.push(`/struk/${transaksi.kode_struk}`)}
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                className="flex-1 bg-blue-600 hover:bg-blue-700 h-11 sm:h-10"
               >
                 <Printer className="mr-2 h-4 w-4" />
                 Cetak Struk
@@ -168,7 +168,7 @@ export default function TransaksiDetailPage({ params }: { params: { id: string }
               <Button
                 onClick={() => router.push(`/qr/${transaksi.kode_struk}`)}
                 variant="outline"
-                className="flex-1"
+                className="flex-1 h-11 sm:h-10"
               >
                 <QrCode className="mr-2 h-4 w-4" />
                 Lihat QR Code

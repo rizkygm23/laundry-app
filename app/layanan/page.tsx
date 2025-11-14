@@ -9,11 +9,11 @@ export default function LayananPage() {
     <DashboardLayout>
       <Card className="shadow-xl">
         <CardHeader className="border-b">
-          <CardTitle className="text-2xl font-bold text-gray-900">
+          <CardTitle className="text-xl sm:text-2xl font-bold text-gray-900">
             Manajemen Layanan
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-6">
+        <CardContent className="p-3 sm:p-6">
           <LayananList />
         </CardContent>
       </Card>

@@ -139,18 +139,18 @@ export default function LayananList() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Daftar Layanan</h2>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
+        <h2 className="text-lg sm:text-xl font-semibold">Daftar Layanan</h2>
         <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700">
+            <Button className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
               Tambah Layanan
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="w-[95vw] max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{editingId ? 'Edit Layanan' : 'Tambah Layanan Baru'}</DialogTitle>
+              <DialogTitle className="text-lg sm:text-xl">{editingId ? 'Edit Layanan' : 'Tambah Layanan Baru'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -213,44 +213,45 @@ export default function LayananList() {
         </Dialog>
       </div>
 
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold">Nama Layanan</TableHead>
-              <TableHead className="font-semibold">Jenis</TableHead>
-              <TableHead className="font-semibold">Harga</TableHead>
-              <TableHead className="font-semibold">Durasi</TableHead>
-              <TableHead className="font-semibold text-right">Aksi</TableHead>
+              <TableHead className="font-semibold text-xs sm:text-sm">Nama Layanan</TableHead>
+              <TableHead className="font-semibold text-xs sm:text-sm">Jenis</TableHead>
+              <TableHead className="font-semibold text-xs sm:text-sm">Harga</TableHead>
+              <TableHead className="font-semibold text-xs sm:text-sm hidden sm:table-cell">Durasi</TableHead>
+              <TableHead className="font-semibold text-right text-xs sm:text-sm">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {layananList.map((layanan) => (
               <TableRow key={layanan.id} className="hover:bg-gray-50">
-                <TableCell className="font-medium">{layanan.nama}</TableCell>
+                <TableCell className="font-medium text-xs sm:text-sm">{layanan.nama}</TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={layanan.jenis_layanan === 'kiloan' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}>
+                  <Badge variant="outline" className={`text-[10px] sm:text-xs ${layanan.jenis_layanan === 'kiloan' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
                     {layanan.jenis_layanan.toUpperCase()}
                   </Badge>
                 </TableCell>
-                <TableCell className="font-semibold">Rp {layanan.harga.toLocaleString('id-ID')}</TableCell>
-                <TableCell>{layanan.durasi_pengerjaan_jam} jam</TableCell>
+                <TableCell className="font-semibold text-xs sm:text-sm">Rp {layanan.harga.toLocaleString('id-ID')}</TableCell>
+                <TableCell className="hidden sm:table-cell text-xs sm:text-sm">{layanan.durasi_pengerjaan_jam} jam</TableCell>
                 <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
+                  <div className="flex justify-end gap-1 sm:gap-2">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEdit(layanan)}
+                      className="h-7 w-7 sm:h-8 sm:w-8 p-0"
                     >
-                      <Pencil className="h-4 w-4" />
+                      <Pencil className="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(layanan.id)}
-                      className="text-red-600 hover:text-red-700"
+                      className="text-red-600 hover:text-red-700 h-7 w-7 sm:h-8 sm:w-8 p-0"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                   </div>
                 </TableCell>

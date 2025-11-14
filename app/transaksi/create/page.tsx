@@ -319,10 +319,10 @@ export default function CreateTransaksi() {
     <DashboardLayout>
       <div className="max-w-4xl mx-auto">
         <Card className="shadow-xl">
-          <CardHeader className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white">
-            <CardTitle className="text-2xl">Buat Pesanan Baru</CardTitle>
+          <CardHeader className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-4 sm:p-6">
+            <CardTitle className="text-xl sm:text-2xl">Buat Pesanan Baru</CardTitle>
           </CardHeader>
-          <CardContent className="p-4 sm:p-6">
+          <CardContent className="p-3 sm:p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-6">
                 <div className="space-y-6">
@@ -335,10 +335,10 @@ export default function CreateTransaksi() {
                     return (
                       <div
                         key={item.id}
-                        className="rounded-xl border border-gray-200 bg-white p-4 sm:p-5 shadow-sm"
+                        className="rounded-xl border border-gray-200 bg-white p-3 sm:p-5 shadow-sm"
                       >
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-lg font-semibold text-gray-900">
+                        <div className="flex items-center justify-between mb-3 sm:mb-0">
+                          <h3 className="text-base sm:text-lg font-semibold text-gray-900">
                             Pesanan #{index + 1}
                           </h3>
                           {orderItems.length > 1 && (
@@ -347,23 +347,23 @@ export default function CreateTransaksi() {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleRemoveItem(item.id)}
-                              className="text-red-600 hover:text-red-700"
+                              className="text-red-600 hover:text-red-700 h-8 sm:h-9"
                             >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Hapus
+                              <Trash2 className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                              <span className="hidden sm:inline">Hapus</span>
                             </Button>
                           )}
                         </div>
 
-                        <div className="mt-4 grid gap-4 md:grid-cols-[1.6fr_1fr]">
+                        <div className="mt-3 sm:mt-4 grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-[1.6fr_1fr]">
                           <div>
-                            <Label className="text-base font-semibold">Pilih Layanan *</Label>
+                            <Label className="text-sm sm:text-base font-semibold">Pilih Layanan *</Label>
                             <Select
                               value={layanan?.id}
                               onValueChange={(value) => handleItemLayananChange(item.id, value)}
                               required
                             >
-                              <SelectTrigger className="mt-2">
+                              <SelectTrigger className="mt-2 h-11 sm:h-10">
                                 <SelectValue placeholder="Pilih layanan..." />
                               </SelectTrigger>
                               <SelectContent>
@@ -379,7 +379,7 @@ export default function CreateTransaksi() {
                             </Select>
                           </div>
                           <div>
-                            <Label className="text-base font-semibold">Jumlah *</Label>
+                            <Label className="text-sm sm:text-base font-semibold">Jumlah *</Label>
                           <div className="mt-2 flex items-center gap-2">
                             <Input
                               type="number"
@@ -387,7 +387,8 @@ export default function CreateTransaksi() {
                               value={item.jumlah}
                               onChange={(e) => handleJumlahChange(item.id, e.target.value)}
                               required
-                              className="flex-1"
+                              className="flex-1 h-11 sm:h-10"
+                              inputMode="numeric"
                             />
                             <div className="flex flex-wrap gap-1">
                               {[1, 2, 3, 4, 5].map((increment) => (
@@ -396,7 +397,7 @@ export default function CreateTransaksi() {
                                   type="button"
                                   variant="outline"
                                   size="sm"
-                                  className="h-9 px-2"
+                                  className="h-9 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
                                   onClick={() => {
                                     const current = parseInt(item.jumlah || '0', 10);
                                     const nextValue = Number.isNaN(current)
@@ -414,37 +415,37 @@ export default function CreateTransaksi() {
                         </div>
 
                         {layanan && (
-                          <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
-                            <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="mt-3 sm:mt-4 rounded-lg border border-blue-200 bg-blue-50 px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-blue-900">
+                            <div className="grid grid-cols-2 gap-2 sm:gap-3">
                               <div className="flex flex-col">
-                                <span className="text-blue-600 text-xs uppercase tracking-wide">
+                                <span className="text-blue-600 text-[10px] sm:text-xs uppercase tracking-wide">
                                   Jenis
                                 </span>
-                                <span className="font-semibold uppercase text-blue-900">
+                                <span className="font-semibold uppercase text-blue-900 text-xs sm:text-sm">
                                   {layanan.jenis_layanan}
                                 </span>
                               </div>
                               <div className="flex flex-col text-right">
-                                <span className="text-blue-600 text-xs uppercase tracking-wide">
+                                <span className="text-blue-600 text-[10px] sm:text-xs uppercase tracking-wide">
                                   Harga
                                 </span>
-                                <span className="font-semibold text-blue-900">
+                                <span className="font-semibold text-blue-900 text-xs sm:text-sm">
                                   Rp {layanan.harga.toLocaleString('id-ID')}
                                 </span>
                               </div>
                               <div className="flex flex-col">
-                                <span className="text-blue-600 text-xs uppercase tracking-wide">
+                                <span className="text-blue-600 text-[10px] sm:text-xs uppercase tracking-wide">
                                   Durasi
                                 </span>
-                                <span className="font-semibold text-blue-900">
+                                <span className="font-semibold text-blue-900 text-xs sm:text-sm">
                                   {layanan.durasi_pengerjaan_jam} jam
                                 </span>
                               </div>
                               <div className="flex flex-col text-right">
-                                <span className="text-blue-600 text-xs uppercase tracking-wide">
+                                <span className="text-blue-600 text-[10px] sm:text-xs uppercase tracking-wide">
                                   Subtotal
                                 </span>
-                                <span className="font-semibold text-blue-900">
+                                <span className="font-semibold text-blue-900 text-xs sm:text-sm">
                                   Rp {subtotal.toLocaleString('id-ID')}
                                 </span>
                               </div>
@@ -459,36 +460,36 @@ export default function CreateTransaksi() {
                     type="button"
                     variant="outline"
                     onClick={handleAddItem}
-                    className="w-full border-dashed border-2 py-6 text-blue-600 hover:text-blue-700"
+                    className="w-full border-dashed border-2 py-4 sm:py-6 text-blue-600 hover:text-blue-700 h-auto"
                   >
-                    <PlusCircle className="mr-2 h-5 w-5" />
+                    <PlusCircle className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                     Tambah Layanan
                   </Button>
                 </div>
 
                 {grandTotal > 0 && (
-                  <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                  <div className="rounded-lg border border-green-200 bg-green-50 p-3 sm:p-4">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold uppercase text-green-700">
+                      <span className="text-xs sm:text-sm font-semibold uppercase text-green-700">
                         Total Estimasi
                       </span>
-                      <span className="text-2xl font-bold text-green-800">
+                      <span className="text-lg sm:text-2xl font-bold text-green-800">
                         Rp {grandTotal.toLocaleString('id-ID')}
                       </span>
                     </div>
-                    <p className="mt-1 text-xs text-green-700">
+                    <p className="mt-1 text-[10px] sm:text-xs text-green-700">
                       Semua pesanan akan menggunakan kode struk yang sama dan tampil sebagai satu
                       struk.
                     </p>
                   </div>
                 )}
 
-                <div className="border-t pt-4">
-                  <h3 className="text-lg font-semibold mb-4">Data Pelanggan</h3>
+                <div className="border-t pt-3 sm:pt-4">
+                  <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Data Pelanggan</h3>
 
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="nomor_hp">Nomor WhatsApp *</Label>
+                      <Label htmlFor="nomor_hp" className="text-sm sm:text-base">Nomor WhatsApp *</Label>
                       <div className="relative mt-2">
                         <Input
                           id="nomor_hp"
@@ -500,7 +501,8 @@ export default function CreateTransaksi() {
                           }}
                           required
                           placeholder="08123456789"
-                          className="pr-10"
+                          className="pr-10 h-11 sm:h-10"
+                          inputMode="tel"
                         />
                         {formData.nama_pelanggan && (
                           <div className="absolute right-3 top-1/2 -translate-y-1/2 text-green-600">
@@ -520,14 +522,14 @@ export default function CreateTransaksi() {
                     </div>
 
                     <div>
-                      <Label htmlFor="nama_pelanggan">Nama Pelanggan *</Label>
+                      <Label htmlFor="nama_pelanggan" className="text-sm sm:text-base">Nama Pelanggan *</Label>
                       <Input
                         id="nama_pelanggan"
                         value={formData.nama_pelanggan}
                         onChange={(e) => setFormData({ ...formData, nama_pelanggan: e.target.value })}
                         required
                         placeholder="Nama akan terisi otomatis jika pelanggan sudah terdaftar"
-                        className="mt-2"
+                        className="mt-2 h-11 sm:h-10"
                       />
                       {formData.nama_pelanggan && formData.nomor_hp.length >= 10 && (
                         <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
@@ -538,13 +540,13 @@ export default function CreateTransaksi() {
                     </div>
 
                     <div>
-                      <Label htmlFor="alamat">Alamat</Label>
+                      <Label htmlFor="alamat" className="text-sm sm:text-base">Alamat</Label>
                       <Input
                         id="alamat"
                         value={formData.alamat}
                         onChange={(e) => setFormData({ ...formData, alamat: e.target.value })}
                         placeholder="Alamat akan terisi otomatis jika pelanggan sudah terdaftar"
-                        className="mt-2"
+                        className="mt-2 h-11 sm:h-10"
                       />
                       {formData.alamat && formData.nomor_hp.length >= 10 && (
                         <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
@@ -558,7 +560,7 @@ export default function CreateTransaksi() {
               </div>
 
               {/* Bayar Langsung Option */}
-              <div className="flex items-center space-x-2 p-4 border rounded-lg bg-gray-50">
+              <div className="flex items-center space-x-2 p-3 sm:p-4 border rounded-lg bg-gray-50">
                 <Checkbox
                   id="bayar-langsung"
                   checked={bayarLangsung}
@@ -566,16 +568,16 @@ export default function CreateTransaksi() {
                 />
                 <Label
                   htmlFor="bayar-langsung"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  className="text-xs sm:text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                 >
                   Bayar langsung setelah pesanan dibuat
                 </Label>
               </div>
 
-              <div className="flex gap-4 pt-4">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-3 sm:pt-4">
                 <Button
                   type="submit"
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white h-12 text-lg"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white h-11 sm:h-12 text-base sm:text-lg"
                   disabled={!allItemsValid}
                 >
                   Buat Pesanan
@@ -584,7 +586,7 @@ export default function CreateTransaksi() {
                   type="button"
                   variant="outline"
                   onClick={() => router.push('/')}
-                  className="h-12"
+                  className="h-11 sm:h-12"
                 >
                   Batal
                 </Button>
