@@ -531,10 +531,10 @@ export default function KeuanganPage() {
                   {Object.keys(transaksiByDate).length === 0 ? (
                     <p className="text-center text-gray-500 py-4 text-sm">Belum ada transaksi</p>
                   ) : (
-                    Object.entries(transaksiByDate)
+                    (Object.entries(transaksiByDate) as [string, any[]][])
                       .sort((a, b) => b[0].localeCompare(a[0]))
                       .slice(0, 10) // Limit to 10 most recent for mobile
-                      .map(([date, transactions]: [string, any[]]) => {
+                      .map(([date, transactions]) => {
                         const total = transactions.reduce((sum, t) => sum + t.total, 0);
                         return (
                           <div key={date} className="flex justify-between items-center p-2 sm:p-3 border rounded-lg hover:bg-gray-50">
