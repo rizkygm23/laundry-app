@@ -18,6 +18,8 @@ import { toast } from 'sonner';
 import { CheckCircle2, PlusCircle, Trash2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
+import { PaymentModal } from '@/components/transaksi/PaymentModal';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface Layanan {
   id: string;
@@ -49,6 +51,11 @@ export default function CreateTransaksi() {
     nomor_hp: '',
     alamat: '',
   });
+  const [bayarLangsung, setBayarLangsung] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [createdTransaksiId, setCreatedTransaksiId] = useState<string | null>(null);
+  const [totalPembayaran, setTotalPembayaran] = useState(0);
+  const [kodeStrukForPayment, setKodeStrukForPayment] = useState<string | null>(null);
 
   useEffect(() => {
     loadLayanan();
@@ -271,7 +278,10 @@ export default function CreateTransaksi() {
         };
       });
 
-      const { error } = await supabase.from('transaksi').insert(transaksiPayload);
+      const { data: insertedData, error } = await supabase
+        .from('transaksi')
+        .insert(transaksiPayload)
+        .select('id');
 
       if (error) {
         console.error('Error inserting transaksi:', error);
@@ -279,9 +289,26 @@ export default function CreateTransaksi() {
         return;
       }
 
+      if (!insertedData || insertedData.length === 0) {
+        toast.error('Gagal membuat pesanan: Tidak ada data yang dibuat');
+        return;
+      }
+
       toast.success('Pesanan berhasil dibuat!');
       window.dispatchEvent(new Event('transaksi-updated'));
-      router.push(`/struk/${kodeStruk}`);
+
+      // Calculate total payment
+      const total = transaksiPayload.reduce((sum, item) => sum + item.total, 0);
+
+      // If bayar langsung, open payment modal
+      if (bayarLangsung) {
+        setCreatedTransaksiId(insertedData[0].id); // Use first transaction ID for payment modal
+        setKodeStrukForPayment(kodeStruk);
+        setTotalPembayaran(total);
+        setPaymentModalOpen(true);
+      } else {
+        router.push(`/struk/${kodeStruk}`);
+      }
     } catch (err) {
       console.error('Unexpected error:', err);
       toast.error('Terjadi kesalahan: ' + (err instanceof Error ? err.message : 'Unknown error'));
@@ -530,6 +557,21 @@ export default function CreateTransaksi() {
                 </div>
               </div>
 
+              {/* Bayar Langsung Option */}
+              <div className="flex items-center space-x-2 p-4 border rounded-lg bg-gray-50">
+                <Checkbox
+                  id="bayar-langsung"
+                  checked={bayarLangsung}
+                  onCheckedChange={(checked) => setBayarLangsung(checked === true)}
+                />
+                <Label
+                  htmlFor="bayar-langsung"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                >
+                  Bayar langsung setelah pesanan dibuat
+                </Label>
+              </div>
+
               <div className="flex gap-4 pt-4">
                 <Button
                   type="submit"
@@ -550,6 +592,40 @@ export default function CreateTransaksi() {
             </form>
           </CardContent>
         </Card>
+
+        {/* Payment Modal */}
+        {createdTransaksiId && (
+          <PaymentModal
+            open={paymentModalOpen}
+            onClose={() => {
+              setPaymentModalOpen(false);
+              if (kodeStrukForPayment) {
+                router.push(`/struk/${kodeStrukForPayment}`);
+              }
+            }}
+            transaksiId={createdTransaksiId}
+            total={totalPembayaran}
+            onSuccess={async () => {
+              // Update all transactions with the same kode_struk
+              if (kodeStrukForPayment) {
+                const { error } = await supabase
+                  .from('transaksi')
+                  .update({ status_pembayaran: 'lunas' })
+                  .eq('kode_struk', kodeStrukForPayment)
+                  .eq('status_pembayaran', 'belum_lunas');
+
+                if (error) {
+                  console.error('Error updating payment status:', error);
+                  toast.error('Gagal memperbarui status pembayaran: ' + error.message);
+                } else {
+                  window.dispatchEvent(new Event('transaksi-updated'));
+                  setPaymentModalOpen(false);
+                  router.push(`/struk/${kodeStrukForPayment}`);
+                }
+              }
+            }}
+          />
+        )}
       </div>
     </DashboardLayout>
   );

@@ -41,6 +41,7 @@ import { format } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
 import { QRScanActions } from './QRScanActions';
+import { PaymentModal } from './PaymentModal';
 
 export interface Transaksi {
   id: string;
@@ -85,6 +86,8 @@ export default function TransaksiList({
   const [selectedTransaksi, setSelectedTransaksi] = useState<Transaksi | null>(null);
   const [activeTransaksi, setActiveTransaksi] = useState<Transaksi | null>(null);
   const [actionModalOpen, setActionModalOpen] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [selectedTransaksiForPayment, setSelectedTransaksiForPayment] = useState<Transaksi | null>(null);
 
   const loadTransaksi = useCallback(async () => {
     setLoading(true);
@@ -124,6 +127,15 @@ export default function TransaksiList({
     loadTransaksi();
   }, [loadTransaksi]);
 
+  // Sync activeTransaksi with transaksiList when it updates
+  useEffect(() => {
+    setActiveTransaksi((current) => {
+      if (!current || transaksiList.length === 0) return current;
+      const updated = transaksiList.find((item) => item.id === current.id);
+      return updated ? (updated as Transaksi) : current;
+    });
+  }, [transaksiList]);
+
   // Show action menu when QR scan finds exactly one result
   useEffect(() => {
     if (searchType === 'qr' && searchQuery && transaksiList.length === 1) {
@@ -146,6 +158,17 @@ export default function TransaksiList({
         return;
       }
 
+      // Check if transaction is completed and paid, then close modal
+      const { data: updatedData } = await supabase
+        .from('transaksi')
+        .select('status_transaksi, status_pembayaran')
+        .eq('id', id)
+        .single();
+
+      if (updatedData && updatedData.status_transaksi === 'selesai' && updatedData.status_pembayaran === 'lunas') {
+        closeActionModal();
+      }
+
       await loadTransaksi();
       if (onUpdate) onUpdate();
     } catch (err) {
@@ -155,6 +178,21 @@ export default function TransaksiList({
   };
 
   const updatePembayaran = async (id: string, status: string) => {
+    // If setting to lunas, open payment modal instead
+    if (status === 'lunas') {
+      const transaksi = transaksiList.find((t) => t.id === id);
+      if (transaksi) {
+        setSelectedTransaksiForPayment(transaksi);
+        setPaymentModalOpen(true);
+        // Close action modal if open
+        if (actionModalOpen) {
+          closeActionModal();
+        }
+      }
+      return;
+    }
+
+    // For other status updates, use the old method
     try {
       const { error } = await supabase
         .from('transaksi')
@@ -172,6 +210,24 @@ export default function TransaksiList({
     } catch (err) {
       console.error('Unexpected error saat memperbarui pembayaran:', err);
       alert('Terjadi kesalahan: ' + (err instanceof Error ? err.message : 'Unknown error'));
+    }
+  };
+
+  const handlePaymentSuccess = async () => {
+    await loadTransaksi();
+    if (onUpdate) onUpdate();
+    
+    // Check if transaction is completed and paid, then close modal
+    if (selectedTransaksiForPayment) {
+      const { data: updatedData } = await supabase
+        .from('transaksi')
+        .select('status_transaksi, status_pembayaran')
+        .eq('id', selectedTransaksiForPayment.id)
+        .single();
+
+      if (updatedData && updatedData.status_transaksi === 'selesai' && updatedData.status_pembayaran === 'lunas') {
+        closeActionModal();
+      }
     }
   };
 
@@ -380,7 +436,12 @@ export default function TransaksiList({
                     <DropdownMenuItem onClick={() => updateStatus(transaksi.id, 'selesai')}>
                       Set Selesai
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => updatePembayaran(transaksi.id, 'lunas')}>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setSelectedTransaksiForPayment(transaksi);
+                        setPaymentModalOpen(true);
+                      }}
+                    >
                       Tandai Lunas
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -401,7 +462,7 @@ export default function TransaksiList({
   );
 
   const renderCardsView = () => (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 text-sm">
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" style={{ fontSize: '12px' }}>
       {transaksiList.map((transaksi) => {
         const accentClass = cardAccent[transaksi.status_transaksi] || cardAccent.default;
         const deadlineDate = new Date(transaksi.deadline);
@@ -464,6 +525,19 @@ export default function TransaksiList({
         onUpdateStatus={handleUpdateStatus}
         onUpdatePembayaran={handleUpdatePembayaran}
       />
+
+      {selectedTransaksiForPayment && (
+        <PaymentModal
+          open={paymentModalOpen}
+          onClose={() => {
+            setPaymentModalOpen(false);
+            setSelectedTransaksiForPayment(null);
+          }}
+          transaksiId={selectedTransaksiForPayment.id}
+          total={selectedTransaksiForPayment.total}
+          onSuccess={handlePaymentSuccess}
+        />
+      )}
 
       {transaksiList.length === 0 ? (
         <div className="text-center py-12 text-gray-500">
@@ -548,7 +622,11 @@ export default function TransaksiList({
                     </Button>
                     <Button
                       variant="outline"
-                      onClick={() => updatePembayaran(activeTransaksi.id, 'lunas')}
+                      onClick={() => {
+                        setSelectedTransaksiForPayment(activeTransaksi);
+                        setPaymentModalOpen(true);
+                        closeActionModal();
+                      }}
                     >
                       Tandai Lunas
                     </Button>

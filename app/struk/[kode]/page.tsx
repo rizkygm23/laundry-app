@@ -117,7 +117,7 @@ export default function StrukPage({ params }: { params: { kode: string } }) {
       .join('\n');
     const statusUrl = `${getBaseUrl()}/status/${first.kode_struk}`;
 
-    const message = `*STRUK LAUNDRY*\n\nKode: ${first.kode_struk}\nNama: ${first.nama_pelanggan}\n\nLayanan:\n${detailLayanan}\n\nTotal: Rp ${totalPembayaran.toLocaleString('id-ID')}\n\nCek status pesanan: ${statusUrl}`;
+    const message = `Terima kasih ${first.nama_pelanggan} telah menggunakan layanan laundry kami!\n\nCek status pesanan Anda di:\n${statusUrl}`;
 
     const nomorHp = pelangganInfo?.nomor_hp?.replace(/^0/, '62');
     const whatsappUrl = nomorHp

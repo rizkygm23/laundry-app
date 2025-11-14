@@ -77,7 +77,7 @@
     @apply border-border;
   }
   html {
-    font-size: 12px;
+    font-size: 16px;
   }
   body {
     @apply bg-background text-foreground;
