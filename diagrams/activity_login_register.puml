@@ -1,69 +1,44 @@
 @startuml Activity Diagram - Login & Register
-title Activity Diagram - Login & Register
+title Activity Diagram - Login & Register (Simplified)
 
 |#LightBlue|User|
 start
-if (Sudah Login?) then (yes)
-  :Redirect ke Dashboard;
-  stop
-else (no)
-endif
-
-:Show Halaman Login;
+:Akses Halaman Login;
 
 if (Pilih Aksi?) then (Login)
   :Input Email & Password;
-  
   |#LightGreen|Sistem|
-  if (Validate Login?) then (Invalid)
-    :Show Error Message;
+  :Validasi Credentials;
+  if (Valid?) then (tidak)
+    :Tampilkan Error;
     |#LightBlue|User|
     :Input Email & Password;
-  else (Valid)
-    :Authenticate via Supabase;
-    
-    if (Login Berhasil?) then (no)
-      :Show Error Message;
-      |#LightBlue|User|
-      :Input Email & Password;
-    else (yes)
-      :Set User Session;
-      :Redirect ke Dashboard;
-      stop
-    endif
+  else (ya)
+    :Authenticate User;
+    :Set Session;
+    :Redirect ke Dashboard;
+    stop
   endif
-  
-elseif (Register) then
+else (Register)
   |#LightBlue|User|
-  :Go to Register Page;
-  :Input: Nama, Email, Password, Confirm Password;
-  
+  :Input Data:\nNama, Email, Password;
   |#LightGreen|Sistem|
-  if (Validate Form?) then (Invalid)
-    :Show Error Message;
+  :Validasi Data;
+  if (Valid?) then (tidak)
+    :Tampilkan Error;
     |#LightBlue|User|
-    :Input: Nama, Email, Password, Confirm Password;
-  else (Valid)
-    if (Password Match?) then (no)
-      :Show Error Message;
-      |#LightBlue|User|
-      :Input: Nama, Email, Password, Confirm Password;
-    else (yes)
-      :Create Account via Supabase;
-      
-      if (Account Created?) then (no)
-        :Show Error Message;
-        |#LightBlue|User|
-        :Input: Nama, Email, Password, Confirm Password;
-      else (yes)
-        :Show Success Message;
-        :Redirect ke Login Page;
-        :Input Email & Password;
-      endif
-    endif
+    :Input Data;
+  else (ya)
+    :Create Account;
+    :Redirect ke Login;
+    |#LightBlue|User|
+    :Input Email & Password;
+    |#LightGreen|Sistem|
+    :Authenticate User;
+    :Set Session;
+    :Redirect ke Dashboard;
+    stop
   endif
 endif
 
-stop
 @enduml
-

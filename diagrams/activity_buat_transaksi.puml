@@ -1,80 +1,47 @@
 @startuml Activity Diagram - Buat Transaksi
-title Activity Diagram - Buat Transaksi
+title Activity Diagram - Buat Transaksi (Simplified)
 
-|#LightBlue|Admin|
+|#LightBlue|User|
 start
-:User Login?;
-if (User belum login?) then (yes)
-  :Redirect ke Login;
-  stop
-else (no)
-endif
-
-:Akses Halaman Create Transaksi;
-:Input Data Pelanggan;
+:Login ke Sistem;
 
 |#LightGreen|Sistem|
-if (Input Nomor HP?) then (Nomor HP > 10 digit)
-  :Auto-fill Data Pelanggan dari Database;
-else (Nomor HP < 10 digit)
-  :Input Manual Nama & Alamat;
-endif
-
-|#LightBlue|Admin|
-:Tambah Item Layanan;
-:Pilih Layanan dari Dropdown;
-:Input Jumlah kg/pcs;
-
-|#LightGreen|Sistem|
-if (Ada Layanan yang Dipilih?) then (no)
-  stop
-else (yes)
-endif
-
-|#LightBlue|Admin|
-if (Tambah Item Lagi?) then (yes)
-  :Tambah Item Layanan;
-else (no)
-endif
-
-|#LightGreen|Sistem|
-:Hitung Total Harga Otomatis;
-
-if (Form Valid?) then (no)
-  :Tampilkan Error Message;
-  stop
-else (yes)
-endif
-
-:Generate Kode Struk Otomatis;
-:Hitung Deadline Otomatis;
-
-if (Perlu Simpan/Update Pelanggan?) then (yes)
-  :Insert/Update Data Pelanggan;
-else (no)
-endif
-
-:Create Transaksi di Database;
-
-|#LightBlue|Admin|
-if (Bayar Langsung?) then (yes)
-  :Buka Modal Payment;
-  :Input Metode Pembayaran;
+:Validasi Login;
+if (Login Valid?) then (tidak)
+  |#LightBlue|User|
+  :Login ke Sistem;
+else (ya)
+  |#LightBlue|User|
+  :Input Data Pelanggan;
   
-  if (Upload Bukti Pembayaran?) then (yes)
-    :Upload File Bukti Pembayaran;
-  else (no)
+  |#LightGreen|Sistem|
+  :Auto-fill Data Pelanggan\ndari Database;
+  
+  |#LightBlue|User|
+  :Pilih Layanan & Jumlah;
+  
+  |#LightGreen|Sistem|
+  :Hitung Total Harga;
+  
+  |#LightBlue|User|
+  :Submit Transaksi;
+  
+  |#LightGreen|Sistem|
+  :Generate Kode Struk;
+  :Simpan Transaksi;
+  
+  |#LightBlue|User|
+  if (Bayar Langsung?) then (ya)
+    :Input Metode Pembayaran;
+    |#LightGreen|Sistem|
+    :Update Status Pembayaran;
+  else (tidak)
   endif
   
   |#LightGreen|Sistem|
-  :Update Status Pembayaran ke Lunas;
-else (no)
-endif
-
-|#LightGreen|Sistem|
-:Tampilkan Success Message;
-:Redirect ke Detail Transaksi;
-
+  :Tampilkan Success Message;
+  
+  |#LightBlue|User|
 stop
-@enduml
 
+@enduml

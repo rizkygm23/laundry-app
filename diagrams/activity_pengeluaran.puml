@@ -1,0 +1,46 @@
+@startuml Activity Diagram - Manajemen Pengeluaran
+title Activity Diagram - Manajemen Pengeluaran (Simplified)
+
+|#LightBlue|User|
+start
+:Akses Halaman Keuangan;
+
+|#LightGreen|Sistem|
+:Load Data Transaksi & Pengeluaran;
+:Pilih Timeframe\n(Hari/Minggu/Bulan/Tahun);
+:Filter Data;
+:Hitung Statistik:\nPendapatan, Pengeluaran, Saldo;
+:Tampilkan Laporan;
+
+|#LightBlue|User|
+if (Aksi?) then (Tambah)
+  :Input Data Pengeluaran:\nKategori, Deskripsi, Jumlah;
+  |#LightGreen|Sistem|
+  :Validasi Data;
+  if (Valid?) then (tidak)
+    :Tampilkan Error;
+    |#LightBlue|User|
+    :Input Data Pengeluaran;
+  else (ya)
+    :Simpan Pengeluaran;
+    :Refresh Laporan;
+    :Tampilkan Laporan;
+  endif
+elseif (Edit) then
+  :Pilih Pengeluaran;
+  :Edit Data;
+  |#LightGreen|Sistem|
+  :Update Pengeluaran;
+  :Refresh Laporan;
+elseif (Hapus) then
+  :Pilih Pengeluaran;
+  :Konfirmasi Hapus;
+  |#LightGreen|Sistem|
+  :Hapus Pengeluaran;
+  :Refresh Laporan;
+endif
+
+stop
+
+@enduml
+

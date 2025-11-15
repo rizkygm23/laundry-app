@@ -1,325 +1,516 @@
-# Activity Diagram - Laundry Management System
+# Activity Diagram - Laundry Management System (Simplified)
 
-## Activity Diagram untuk Use Case Utama
+Activity Diagram yang disederhanakan dengan fokus pada interaksi antara User dan Sistem.
 
-### 1. Activity Diagram - Buat Transaksi
+## 1. Activity Diagram - Buat Transaksi
 
-#### Format Mermaid
+### Format Mermaid
 
 ```mermaid
 flowchart TD
-    Start([Start]) --> Login{User Login?}
-    Login -->|No| Redirect[Redirect ke Login]
-    Redirect --> Login
-    Login -->|Yes| Access[Akses Halaman Create Transaksi]
-    Access --> InputPelanggan[Input Data Pelanggan]
-    InputPelanggan --> CheckNomorHP{Input Nomor HP}
-    CheckNomorHP -->|Nomor HP > 10 digit| AutoFill[Auto-fill Data Pelanggan dari Database]
-    CheckNomorHP -->|Nomor HP < 10 digit| ManualInput[Input Manual Nama & Alamat]
-    AutoFill --> AddItem[Tambah Item Layanan]
-    ManualInput --> AddItem
-    AddItem --> PilihLayanan[Pilih Layanan dari Dropdown]
-    PilihLayanan --> InputJumlah[Input Jumlah kg/pcs]
-    InputJumlah --> CheckLayanan{Ada Layanan yang Dipilih?}
-    CheckLayanan -->|No| PilihLayanan
-    CheckLayanan -->|Yes| AddMoreItem{Tambah Item Lagi?}
-    AddMoreItem -->|Yes| AddItem
-    AddMoreItem -->|No| CalculateTotal[Hitung Total Harga Otomatis]
-    CalculateTotal --> CheckForm{Form Valid?}
-    CheckForm -->|No| ShowError[Tampilkan Error Message]
-    ShowError --> InputPelanggan
-    CheckForm -->|Yes| GenerateKode[Generate Kode Struk Otomatis]
-    GenerateKode --> CalculateDeadline[Hitung Deadline Otomatis]
-    CalculateDeadline --> SavePelanggan{Perlu Simpan/Update Pelanggan?}
-    SavePelanggan -->|Yes| InsertPelanggan[Insert/Update Data Pelanggan]
-    SavePelanggan -->|No| CreateTransaksi
-    InsertPelanggan --> CreateTransaksi[Create Transaksi di Database]
-    CreateTransaksi --> CheckPayment{Bayar Langsung?}
-    CheckPayment -->|Yes| OpenPayment[Buka Modal Payment]
-    CheckPayment -->|No| ShowSuccess[Tampilkan Success Message]
-    OpenPayment --> InputPayment[Input Metode Pembayaran]
-    InputPayment --> UploadBukti{Upload Bukti Pembayaran?}
-    UploadBukti -->|Yes| UploadFile[Upload File Bukti Pembayaran]
-    UploadBukti -->|No| UpdatePayment
-    UploadFile --> UpdatePayment[Update Status Pembayaran ke Lunas]
-    UpdatePayment --> ShowSuccess
-    ShowSuccess --> RedirectDetail[Redirect ke Detail Transaksi]
-    RedirectDetail --> End([End])
+    subgraph User["👤 User (Admin)"]
+        U1[1. Login ke Sistem]
+        U2[2. Input Data Pelanggan]
+        U3[3. Pilih Layanan & Jumlah]
+        U4[4. Submit Transaksi]
+        U5[5. Pilih Bayar Langsung?]
+        U6[6. Input Pembayaran]
+    end
+    
+    subgraph System["⚙️ Sistem"]
+        S1[1. Validasi Login]
+        S2[2. Auto-fill Data Pelanggan]
+        S3[3. Hitung Total Harga]
+        S4[4. Generate Kode Struk]
+        S5[5. Simpan Transaksi]
+        S6[6. Update Status Pembayaran]
+        S7[7. Tampilkan Success]
+    end
+    
+    Start([Start]) --> U1
+    U1 --> S1
+    S1 -->|Valid| U2
+    S1 -->|Invalid| U1
+    U2 --> S2
+    S2 --> U3
+    U3 --> S3
+    S3 --> U4
+    U4 --> S4
+    S4 --> S5
+    S5 --> U5
+    U5 -->|Ya| U6
+    U5 -->|Tidak| S7
+    U6 --> S6
+    S6 --> S7
+    S7 --> End([End])
 ```
 
-#### Format PlantUML
+### Format PlantUML
 
 ```plantuml
 @startuml
 title Activity Diagram - Buat Transaksi
 
-|#LightBlue|Admin|
+|#LightBlue|User|
 start
-:User Login?;
-if (User belum login?) then (yes)
-  :Redirect ke Login;
-  stop
-else (no)
-endif
-
-:Akses Halaman Create Transaksi;
-:Input Data Pelanggan;
+:Login ke Sistem;
 
 |#LightGreen|Sistem|
-if (Input Nomor HP?) then (Nomor HP > 10 digit)
-  :Auto-fill Data Pelanggan dari Database;
-else (Nomor HP < 10 digit)
-  :Input Manual Nama & Alamat;
-endif
-
-|#LightBlue|Admin|
-:Tambah Item Layanan;
-:Pilih Layanan dari Dropdown;
-:Input Jumlah kg/pcs;
-
-|#LightGreen|Sistem|
-if (Ada Layanan yang Dipilih?) then (no)
-  stop
-else (yes)
-endif
-
-|#LightBlue|Admin|
-if (Tambah Item Lagi?) then (yes)
-  :Tambah Item Layanan;
-else (no)
-endif
-
-|#LightGreen|Sistem|
-:Hitung Total Harga Otomatis;
-
-if (Form Valid?) then (no)
-  :Tampilkan Error Message;
-  stop
-else (yes)
-endif
-
-:Generate Kode Struk Otomatis;
-:Hitung Deadline Otomatis;
-
-if (Perlu Simpan/Update Pelanggan?) then (yes)
-  :Insert/Update Data Pelanggan;
-else (no)
-endif
-
-:Create Transaksi di Database;
-
-|#LightBlue|Admin|
-if (Bayar Langsung?) then (yes)
-  :Buka Modal Payment;
-  :Input Metode Pembayaran;
+:Validasi Login;
+if (Login Valid?) then (tidak)
+  |#LightBlue|User|
+  :Login ke Sistem;
+else (ya)
+  |#LightBlue|User|
+  :Input Data Pelanggan;
   
-  if (Upload Bukti Pembayaran?) then (yes)
-    :Upload File Bukti Pembayaran;
-  else (no)
+  |#LightGreen|Sistem|
+  :Auto-fill Data Pelanggan\ndari Database;
+  
+  |#LightBlue|User|
+  :Pilih Layanan & Jumlah;
+  
+  |#LightGreen|Sistem|
+  :Hitung Total Harga;
+  
+  |#LightBlue|User|
+  :Submit Transaksi;
+  
+  |#LightGreen|Sistem|
+  :Generate Kode Struk;
+  :Simpan Transaksi;
+  
+  |#LightBlue|User|
+  if (Bayar Langsung?) then (ya)
+    :Input Metode Pembayaran;
+    |#LightGreen|Sistem|
+    :Update Status Pembayaran;
+  else (tidak)
   endif
   
   |#LightGreen|Sistem|
-  :Update Status Pembayaran ke Lunas;
-else (no)
-endif
-
-|#LightGreen|Sistem|
-:Tampilkan Success Message;
-:Redirect ke Detail Transaksi;
-
+  :Tampilkan Success Message;
+  
+  |#LightBlue|User|
 stop
+
 @enduml
 ```
 
 ---
 
-### 2. Activity Diagram - Update Status Transaksi
+## 2. Activity Diagram - Update Status Transaksi
 
-#### Format Mermaid
-
-```mermaid
-flowchart TD
-    Start([Start]) --> Login{User Login?}
-    Login -->|No| Redirect[Redirect ke Login]
-    Redirect --> Login
-    Login -->|Yes| ViewTransaksi[View Daftar Transaksi]
-    ViewTransaksi --> SelectTransaksi[Pilih Transaksi]
-    SelectTransaksi --> ViewDetail[Lihat Detail Transaksi]
-    ViewDetail --> CheckStatus{Status Transaksi}
-    CheckStatus -->|Antrian| UpdateToProses[Update ke 'Proses']
-    CheckStatus -->|Proses| UpdateToSelesai[Update ke 'Selesai']
-    CheckStatus -->|Selesai| ShowMessage[Transaksi Sudah Selesai]
-    UpdateToProses --> SaveStatus[Simpan Status ke Database]
-    UpdateToSelesai --> SaveStatus
-    SaveStatus --> RealTimeUpdate[Update Real-time via Supabase]
-    RealTimeUpdate --> NotifyPelanggan{Pelanggan Sedang Cek Status?}
-    NotifyPelanggan -->|Yes| AutoUpdateView[Auto-update Halaman Status Pelanggan]
-    NotifyPelanggan -->|No| Continue
-    AutoUpdateView --> Continue
-    ShowMessage --> Continue[Continue]
-    Continue --> RefreshList[Refresh Daftar Transaksi]
-    RefreshList --> End([End])
-```
-
----
-
-### 3. Activity Diagram - Update Status Pembayaran
-
-#### Format Mermaid
+### Format Mermaid
 
 ```mermaid
 flowchart TD
-    Start([Start]) --> Login{User Login?}
-    Login -->|No| Redirect[Redirect ke Login]
-    Redirect --> Login
-    Login -->|Yes| ViewTransaksi[View Daftar Transaksi]
-    ViewTransaksi --> SelectTransaksi[Pilih Transaksi]
-    SelectTransaksi --> CheckPayment{Status Pembayaran}
-    CheckPayment -->|Lunas| ShowMessage[Transaksi Sudah Lunas]
-    CheckPayment -->|Belum Lunas| OpenPayment[Buka Modal Payment]
-    OpenPayment --> SelectMethod[Pilih Metode Pembayaran]
-    SelectMethod --> CheckMethod{Metode Pembayaran}
-    CheckMethod -->|Tunai| DirectUpdate[Langsung Update ke Lunas]
-    CheckMethod -->|Transfer/E-Wallet/QRIS| UploadProof[Upload Bukti Pembayaran]
-    UploadProof --> ValidateFile{File Valid?}
-    ValidateFile -->|No| ShowError[Tampilkan Error]
-    ShowError --> UploadProof
-    ValidateFile -->|Yes| SaveToStorage[Simpan File ke Supabase Storage]
-    SaveToStorage --> GetURL[Get URL Bukti Pembayaran]
-    GetURL --> UpdatePayment[Update Status Pembayaran ke Lunas]
-    DirectUpdate --> UpdatePayment
-    UpdatePayment --> SavePaymentStatus[Simpan ke Database]
-    SavePaymentStatus --> RealTimeUpdate[Update Real-time]
-    RealTimeUpdate --> ShowSuccess[Tampilkan Success Message]
-    ShowMessage --> Continue
-    ShowSuccess --> Continue[Continue]
-    Continue --> RefreshList[Refresh Daftar Transaksi]
-    RefreshList --> End([End])
-```
-
----
-
-### 4. Activity Diagram - Cek Status Transaksi (Pelanggan)
-
-#### Format Mermaid
-
-```mermaid
-flowchart TD
-    Start([Start]) --> AccessPublic[Akses Halaman Status /status/kode]
-    AccessPublic --> LoadTransaksi[Load Data Transaksi dari Database]
-    LoadTransaksi --> CheckKode{Kode Valid?}
-    CheckKode -->|No| ShowNotFound[Show: Kode Tidak Ditemukan]
-    CheckKode -->|Yes| DisplayStatus[Tampilkan Status Transaksi]
-    DisplayStatus --> SubscribeRealtime[Subscribe ke Supabase Realtime]
-    SubscribeRealtime --> DisplayInfo[Tampilkan Info: Kode, Nama, Layanan, Total]
-    DisplayInfo --> DisplayStatusTransaksi[Display Status: Antrian/Proses/Selesai]
-    DisplayStatusTransaksi --> DisplayPaymentStatus[Display Status Pembayaran]
-    DisplayPaymentStatus --> WaitUpdate{Wait for Updates}
-    WaitUpdate -->|Status Berubah| AutoRefresh[Auto-refresh Status Display]
-    WaitUpdate -->|No Update| Continue
-    AutoRefresh --> WaitUpdate
-    Continue --> CheckUpdate{User Refresh Page?}
-    CheckUpdate -->|Yes| LoadTransaksi
-    CheckUpdate -->|No| End([End])
-    ShowNotFound --> End
-```
-
----
-
-### 5. Activity Diagram - Login & Register
-
-#### Format Mermaid
-
-```mermaid
-flowchart TD
-    Start([Start]) --> CheckAuth{Sudah Login?}
-    CheckAuth -->|Yes| RedirectDashboard[Redirect ke Dashboard]
-    RedirectDashboard --> End([End])
-    CheckAuth -->|No| ShowLogin[Show Halaman Login]
-    ShowLogin --> SelectAction{Pilih Aksi}
-    SelectAction -->|Login| InputLogin[Input Email & Password]
-    SelectAction -->|Register| GoRegister[Go to Register Page]
-    InputLogin --> ValidateLogin{Validate Login}
-    ValidateLogin -->|Invalid| ShowError[Show Error Message]
-    ShowError --> InputLogin
-    ValidateLogin -->|Valid| Authenticate[Authenticate via Supabase]
-    Authenticate --> CheckAuthSuccess{Login Berhasil?}
-    CheckAuthSuccess -->|No| ShowError
-    CheckAuthSuccess -->|Yes| SetSession[Set User Session]
-    SetSession --> RedirectDashboard
+    subgraph User["👤 User (Admin)"]
+        U1[1. Pilih Transaksi]
+        U2[2. Klik Update Status]
+        U3[3. Pilih Status Baru]
+        U4[4. Konfirmasi Update]
+    end
     
-    GoRegister --> InputRegister[Input: Nama, Email, Password, Confirm Password]
-    InputRegister --> ValidateRegister{Validate Form}
-    ValidateRegister -->|Invalid| ShowErrorReg[Show Error Message]
-    ShowErrorReg --> InputRegister
-    ValidateRegister -->|Valid| CheckPassword{Password Match?}
-    CheckPassword -->|No| ShowErrorReg
-    CheckPassword -->|Yes| CreateAccount[Create Account via Supabase]
-    CreateAccount --> CheckCreateSuccess{Account Created?}
-    CheckCreateSuccess -->|No| ShowErrorReg
-    CheckCreateSuccess -->|Yes| ShowSuccessReg[Show Success Message]
-    ShowSuccessReg --> ShowLogin
+    subgraph System["⚙️ Sistem"]
+        S1[1. Tampilkan Daftar Transaksi]
+        S2[2. Validasi Status]
+        S3[3. Update Database]
+        S4[4. Real-time Update]
+        S5[5. Tampilkan Konfirmasi]
+    end
+    
+    Start([Start]) --> S1
+    S1 --> U1
+    U1 --> U2
+    U2 --> S2
+    S2 --> U3
+    U3 --> U4
+    U4 --> S3
+    S3 --> S4
+    S4 --> S5
+    S5 --> End([End])
+```
+
+### Format PlantUML
+
+```plantuml
+@startuml
+title Activity Diagram - Update Status Transaksi
+
+|#LightGreen|Sistem|
+start
+:Tampilkan Daftar Transaksi;
+
+|#LightBlue|User|
+:Pilih Transaksi;
+:Klik Update Status;
+:Pilih Status Baru\n(Antrian → Proses → Selesai);
+
+|#LightGreen|Sistem|
+:Validasi Status;
+:Update Database;
+:Real-time Update\nto Pelanggan;
+
+|#LightBlue|User|
+:Tampilkan Konfirmasi;
+stop
+
+@enduml
 ```
 
 ---
 
-### 6. Activity Diagram - Manajemen Pengeluaran
+## 3. Activity Diagram - Update Status Pembayaran
 
-#### Format Mermaid
+### Format Mermaid
 
 ```mermaid
 flowchart TD
-    Start([Start]) --> Login{User Login?}
-    Login -->|No| Redirect[Redirect ke Login]
-    Redirect --> Login
-    Login -->|Yes| AccessKeuangan[Akses Halaman Keuangan]
-    AccessKeuangan --> SelectTimeframe[Pilih Timeframe: Hari Ini/Seminggu/Sebulan/Tahun]
-    SelectTimeframe --> LoadData[Load Data Transaksi & Pengeluaran]
-    LoadData --> DisplayStats[Tampilkan Statistik: Pendapatan, Pengeluaran, Saldo Kas]
-    DisplayStats --> SelectAction{Pilih Aksi}
-    SelectAction -->|Tambah Pengeluaran| OpenDialog[Buka Dialog Tambah Pengeluaran]
-    SelectAction -->|Edit Pengeluaran| SelectPengeluaran[Pilih Pengeluaran]
-    SelectAction -->|Hapus Pengeluaran| ConfirmDelete{Konfirmasi Hapus}
-    SelectAction -->|View Only| End([End])
+    subgraph User["👤 User (Admin)"]
+        U1[1. Pilih Transaksi]
+        U2[2. Klik Bayar]
+        U3[3. Pilih Metode Pembayaran]
+        U4[4. Upload Bukti Pembayaran?]
+        U5[5. Konfirmasi Pembayaran]
+    end
     
-    OpenDialog --> InputPengeluaran[Input: Kategori, Deskripsi, Jumlah, Tanggal]
-    InputPengeluaran --> ValidateForm{Form Valid?}
-    ValidateForm -->|No| ShowError[Tampilkan Error]
-    ShowError --> InputPengeluaran
-    ValidateForm -->|Yes| SavePengeluaran[Save Pengeluaran ke Database]
-    SavePengeluaran --> RefreshData[Refresh Data]
-    RefreshData --> RecalculateStats[Recalculate Statistik]
-    RecalculateStats --> DisplayStats
+    subgraph System["⚙️ Sistem"]
+        S1[1. Buka Modal Payment]
+        S2[2. Validasi Data]
+        S3[3. Simpan Bukti Pembayaran]
+        S4[4. Update Status ke Lunas]
+        S5[5. Tampilkan Konfirmasi]
+    end
     
-    SelectPengeluaran --> OpenEditDialog[Buka Dialog Edit]
-    OpenEditDialog --> EditData[Edit Data Pengeluaran]
-    EditData --> ValidateEdit{Form Valid?}
-    ValidateEdit -->|No| ShowError
-    ValidateEdit -->|Yes| UpdatePengeluaran[Update Pengeluaran]
-    UpdatePengeluaran --> RefreshData
-    
-    ConfirmDelete -->|Yes| DeletePengeluaran[Delete Pengeluaran]
-    ConfirmDelete -->|No| DisplayStats
-    DeletePengeluaran --> RefreshData
+    Start([Start]) --> U1
+    U1 --> U2
+    U2 --> S1
+    S1 --> U3
+    U3 --> U4
+    U4 -->|Ya| S3
+    U4 -->|Tidak| S4
+    U3 --> S2
+    S2 -->|Valid| U5
+    S2 -->|Invalid| U3
+    S3 --> S4
+    U5 --> S4
+    S4 --> S5
+    S5 --> End([End])
+```
+
+### Format PlantUML
+
+```plantuml
+@startuml
+title Activity Diagram - Update Status Pembayaran
+
+|#LightBlue|User|
+start
+:Pilih Transaksi;
+:Klik Bayar;
+
+|#LightGreen|Sistem|
+:Buka Modal Payment;
+
+|#LightBlue|User|
+:Pilih Metode Pembayaran\n(Tunai/Transfer/E-Wallet/QRIS);
+
+|#LightGreen|Sistem|
+:Validasi Data;
+
+|#LightBlue|User|
+if (Upload Bukti Pembayaran?) then (ya)
+  :Upload File Bukti;
+  |#LightGreen|Sistem|
+  :Simpan Bukti Pembayaran\ndi Storage;
+else (tidak)
+endif
+
+|#LightBlue|User|
+:Konfirmasi Pembayaran;
+
+|#LightGreen|Sistem|
+:Update Status ke Lunas;
+:Tampilkan Konfirmasi;
+
+|#LightBlue|User|
+stop
+
+@enduml
 ```
 
 ---
 
-## Format PlantUML - Semua Activity Diagram
+## 4. Activity Diagram - Cek Status Transaksi (Pelanggan)
 
-File terpisah dengan format PlantUML lengkap dapat dibuat sesuai kebutuhan.
+### Format Mermaid
+
+```mermaid
+flowchart TD
+    subgraph Pelanggan["👤 Pelanggan"]
+        P1[1. Scan QR Code atau\nMasukkan Kode Struk]
+        P2[2. Lihat Status Transaksi]
+        P3[3. Wait untuk Update Status]
+    end
+    
+    subgraph System["⚙️ Sistem"]
+        S1[1. Validasi Kode Struk]
+        S2[2. Load Data Transaksi]
+        S3[3. Tampilkan Status]
+        S4[4. Subscribe Real-time]
+        S5[5. Auto-update Status]
+    end
+    
+    Start([Start]) --> P1
+    P1 --> S1
+    S1 -->|Valid| S2
+    S1 -->|Invalid| Error[Kode Tidak Ditemukan]
+    S2 --> S3
+    S3 --> S4
+    S4 --> P2
+    P2 --> P3
+    P3 --> S5
+    S5 --> P2
+    Error --> End([End])
+    P3 --> End
+```
+
+### Format PlantUML
+
+```plantuml
+@startuml
+title Activity Diagram - Cek Status Transaksi (Pelanggan)
+
+|#Yellow|Pelanggan|
+start
+:Scan QR Code atau\nMasukkan Kode Struk;
+
+|#LightGreen|Sistem|
+if (Kode Valid?) then (tidak)
+  :Tampilkan Error:\nKode Tidak Ditemukan;
+  stop
+else (ya)
+  :Load Data Transaksi;
+  :Tampilkan Status:\n- Status Transaksi\n- Status Pembayaran\n- Info Transaksi;
+  :Subscribe Real-time Update;
+  
+  |#Yellow|Pelanggan|
+  :Lihat Status Transaksi;
+  
+  |#LightGreen|Sistem|
+  :Auto-update Status\nsaat Admin Update;
+  
+  |#Yellow|Pelanggan|
+  :Status Terupdate Otomatis;
+endif
+
+stop
+
+@enduml
+```
+
+---
+
+## 5. Activity Diagram - Login & Register
+
+### Format Mermaid
+
+```mermaid
+flowchart TD
+    subgraph User["👤 User"]
+        U1[1. Akses Halaman Login]
+        U2[2a. Input Email & Password]
+        U2B[2b. Klik Register]
+        U3[3b. Input Data Registrasi]
+        U4[4b. Submit Register]
+        U5[5. Submit Login]
+    end
+    
+    subgraph System["⚙️ Sistem"]
+        S1[1. Validasi Credentials]
+        S2[2. Authenticate User]
+        S3[3. Validasi Data Register]
+        S4[4. Create Account]
+        S5[5. Set Session]
+        S6[6. Redirect ke Dashboard]
+    end
+    
+    Start([Start]) --> U1
+    U1 -->|Login| U2
+    U1 -->|Register| U2B
+    U2 --> U5
+    U5 --> S1
+    S1 -->|Valid| S2
+    S1 -->|Invalid| Error1[Tampilkan Error]
+    S2 --> S5
+    S5 --> S6
+    S6 --> End([End])
+    Error1 --> U2
+    U2B --> U3
+    U3 --> U4
+    U4 --> S3
+    S3 -->|Valid| S4
+    S3 -->|Invalid| Error2[Tampilkan Error]
+    S4 --> U1
+    Error2 --> U3
+```
+
+### Format PlantUML
+
+```plantuml
+@startuml
+title Activity Diagram - Login & Register
+
+|#LightBlue|User|
+start
+:Akses Halaman Login;
+
+if (Pilih Aksi?) then (Login)
+  :Input Email & Password;
+  |#LightGreen|Sistem|
+  :Validasi Credentials;
+  if (Valid?) then (tidak)
+    :Tampilkan Error;
+    |#LightBlue|User|
+    :Input Email & Password;
+  else (ya)
+    :Authenticate User;
+    :Set Session;
+    :Redirect ke Dashboard;
+    stop
+  endif
+else (Register)
+  |#LightBlue|User|
+  :Input Data:\nNama, Email, Password;
+  |#LightGreen|Sistem|
+  :Validasi Data;
+  if (Valid?) then (tidak)
+    :Tampilkan Error;
+    |#LightBlue|User|
+    :Input Data;
+  else (ya)
+    :Create Account;
+    :Redirect ke Login;
+    |#LightBlue|User|
+    :Input Email & Password;
+    |#LightGreen|Sistem|
+    :Authenticate User;
+    :Set Session;
+    :Redirect ke Dashboard;
+    stop
+  endif
+endif
+
+@enduml
+```
+
+---
+
+## 6. Activity Diagram - Manajemen Pengeluaran
+
+### Format Mermaid
+
+```mermaid
+flowchart TD
+    subgraph User["👤 User (Admin)"]
+        U1[1. Akses Halaman Keuangan]
+        U2[2. Pilih Timeframe]
+        U3[3. Tambah/Edit/Hapus Pengeluaran]
+        U4[4. Input Data Pengeluaran]
+        U5[5. Submit]
+    end
+    
+    subgraph System["⚙️ Sistem"]
+        S1[1. Load Data Transaksi & Pengeluaran]
+        S2[2. Filter by Timeframe]
+        S3[3. Hitung Statistik]
+        S4[4. Tampilkan Laporan]
+        S5[5. Validasi Data]
+        S6[6. Simpan/Update/Hapus]
+        S7[7. Refresh Laporan]
+    end
+    
+    Start([Start]) --> U1
+    U1 --> S1
+    S1 --> S2
+    S2 --> S3
+    S3 --> S4
+    S4 --> U2
+    U2 --> S2
+    S4 --> U3
+    U3 --> U4
+    U4 --> U5
+    U5 --> S5
+    S5 -->|Valid| S6
+    S5 -->|Invalid| Error[Tampilkan Error]
+    S6 --> S7
+    S7 --> S4
+    Error --> U4
+```
+
+### Format PlantUML
+
+```plantuml
+@startuml
+title Activity Diagram - Manajemen Pengeluaran
+
+|#LightBlue|User|
+start
+:Akses Halaman Keuangan;
+
+|#LightGreen|Sistem|
+:Load Data Transaksi & Pengeluaran;
+:Pilih Timeframe\n(Hari/Minggu/Bulan/Tahun);
+:Filter Data;
+:Hitung Statistik:\nPendapatan, Pengeluaran, Saldo;
+:Tampilkan Laporan;
+
+|#LightBlue|User|
+if (Aksi?) then (Tambah)
+  :Input Data Pengeluaran:\nKategori, Deskripsi, Jumlah;
+  |#LightGreen|Sistem|
+  :Validasi Data;
+  if (Valid?) then (tidak)
+    :Tampilkan Error;
+    |#LightBlue|User|
+    :Input Data Pengeluaran;
+  else (ya)
+    :Simpan Pengeluaran;
+    :Refresh Laporan;
+    :Tampilkan Laporan;
+  endif
+elseif (Edit) then
+  :Pilih Pengeluaran;
+  :Edit Data;
+  |#LightGreen|Sistem|
+  :Update Pengeluaran;
+  :Refresh Laporan;
+elseif (Hapus) then
+  :Pilih Pengeluaran;
+  :Konfirmasi Hapus;
+  |#LightGreen|Sistem|
+  :Hapus Pengeluaran;
+  :Refresh Laporan;
+endif
+
+stop
+
+@enduml
+```
+
+---
 
 ## Cara Menggunakan
 
-### Mermaid Diagram
-1. **GitHub/GitLab**: Copy-paste langsung ke README.md atau file markdown
-2. **Notion**: Gunakan `/mermaid` block
-3. **VS Code**: Install extension "Markdown Preview Mermaid Support"
-4. **Online**: [Mermaid Live Editor](https://mermaid.live)
+### Mermaid
+- **GitHub/GitLab**: Copy langsung ke file `.md`
+- **Notion**: Gunakan block `/mermaid`
+- **VS Code**: Install "Markdown Preview Mermaid Support"
+- **Online**: [Mermaid Live Editor](https://mermaid.live)
 
-### PlantUML Diagram
-1. **VS Code**: Install extension "PlantUML"
-2. **Online**: [PlantUML Web Server](http://www.plantuml.com/plantuml/uml/)
-3. **Draw.io**: Import atau copy-paste code
-4. **IntelliJ IDEA**: Built-in support
-
+### PlantUML
+- **VS Code**: Install extension "PlantUML"
+- **IntelliJ**: Built-in support
+- **Online**: [PlantUML Web Server](http://www.plantuml.com/plantuml/uml/)
+- **Draw.io**: Import dari text
