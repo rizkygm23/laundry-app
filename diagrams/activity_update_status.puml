@@ -1,0 +1,38 @@
+@startuml Activity Diagram - Update Status Transaksi
+title Activity Diagram - Update Status Transaksi
+
+|#LightBlue|Admin|
+start
+:User Login?;
+if (User belum login?) then (yes)
+  :Redirect ke Login;
+  stop
+else (no)
+endif
+
+:View Daftar Transaksi;
+:Pilih Transaksi;
+:Lihat Detail Transaksi;
+
+|#LightGreen|Sistem|
+if (Status Transaksi?) then (Antrian)
+  :Update ke 'Proses';
+elseif (Proses) then
+  :Update ke 'Selesai';
+elseif (Selesai) then
+  :Transaksi Sudah Selesai;
+  stop
+endif
+
+:Simpan Status ke Database;
+:Update Real-time via Supabase;
+
+if (Pelanggan Sedang Cek Status?) then (yes)
+  :Auto-update Halaman Status Pelanggan;
+else (no)
+endif
+
+:Refresh Daftar Transaksi;
+stop
+@enduml
+

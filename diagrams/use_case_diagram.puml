@@ -1,0 +1,87 @@
+@startuml Use Case Diagram - Laundry Management System
+title Use Case Diagram - Laundry Management System
+
+left to right direction
+
+actor "Admin/Staff" as Admin
+actor "Pelanggan" as Pelanggan
+
+rectangle "Laundry Management System" {
+    
+    package "Authentication" {
+        usecase "Register" as UC1
+        usecase "Login" as UC2
+        usecase "Logout" as UC3
+    }
+    
+    package "Manajemen Layanan" {
+        usecase "View Layanan" as UC4
+        usecase "Create Layanan" as UC5
+        usecase "Update Layanan" as UC6
+        usecase "Delete Layanan" as UC7
+    }
+    
+    package "Manajemen Pelanggan" {
+        usecase "View Pelanggan" as UC8
+        usecase "Create Pelanggan" as UC9
+        usecase "Update Pelanggan" as UC10
+        usecase "Delete Pelanggan" as UC11
+        usecase "Search Pelanggan" as UC12
+    }
+    
+    package "Manajemen Transaksi" {
+        usecase "View Transaksi" as UC13
+        usecase "Create Transaksi" as UC14
+        usecase "Update Status Transaksi" as UC15
+        usecase "Update Status Pembayaran" as UC16
+        usecase "View Detail Transaksi" as UC17
+        usecase "Generate Struk" as UC18
+        usecase "Generate QR Code" as UC19
+        usecase "Kirim Struk via WhatsApp" as UC20
+        usecase "Search Transaksi" as UC21
+    }
+    
+    package "Keuangan" {
+        usecase "View Laporan Keuangan" as UC22
+        usecase "Manajemen Pengeluaran" as UC23
+        usecase "View Statistik" as UC24
+    }
+    
+    package "Public Features" {
+        usecase "Cek Status Transaksi" as UC25
+        usecase "View QR Code" as UC26
+    }
+}
+
+' Admin use cases
+Admin --> UC1
+Admin --> UC2
+Admin --> UC3
+Admin --> UC4
+Admin --> UC5
+Admin --> UC6
+Admin --> UC7
+Admin --> UC8
+Admin --> UC9
+Admin --> UC10
+Admin --> UC11
+Admin --> UC12
+Admin --> UC13
+Admin --> UC14
+Admin --> UC15
+Admin --> UC16
+Admin --> UC17
+Admin --> UC18
+Admin --> UC19
+Admin --> UC20
+Admin --> UC21
+Admin --> UC22
+Admin --> UC23
+Admin --> UC24
+
+' Pelanggan use cases
+Pelanggan --> UC25
+Pelanggan --> UC26
+
+@enduml
+

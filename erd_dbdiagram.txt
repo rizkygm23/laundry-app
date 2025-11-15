@@ -1,0 +1,82 @@
+// ERD untuk Aplikasi Laundry Management System
+// Script ini dapat digunakan di https://dbdiagram.io
+
+// Table: users
+Table users {
+  id uuid [primary key, default: `gen_random_uuid()`]
+  username text [unique, not null]
+  name text [not null]
+  alamat text [default: '']
+  password text [not null]
+  nomor_hp text [default: '']
+  email text [unique, not null]
+  created_at timestamptz [default: `now()`]
+  
+  Note: 'Tabel untuk menyimpan data pengguna/admin sistem laundry'
+}
+
+// Table: layanan (Services)
+Table layanan {
+  id uuid [primary key, default: `gen_random_uuid()`]
+  nama text [not null]
+  jenis_layanan text [not null] // 'kiloan' | 'satuan'
+  harga integer [not null, default: 0]
+  durasi_pengerjaan_jam integer [not null, default: 24]
+  created_at timestamptz [default: `now()`]
+  
+  Note: 'Tabel untuk menyimpan daftar layanan laundry (kiloan/satuan)'
+}
+
+// Table: pelanggan (Customers)
+Table pelanggan {
+  id uuid [primary key, default: `gen_random_uuid()`]
+  nama text [not null]
+  nomor_hp text [not null]
+  alamat text [default: '']
+  created_at timestamptz [default: `now()`]
+  
+  Note: 'Tabel untuk menyimpan data pelanggan'
+}
+
+// Table: transaksi (Transactions)
+Table transaksi {
+  id uuid [primary key, default: `gen_random_uuid()`]
+  kode_struk text [not null]
+  id_pelanggan uuid
+  id_users uuid
+  id_layanan uuid
+  nama_layanan text [not null]
+  nama_pelanggan text [not null]
+  alamat_pelanggan text [default: '']
+  jumlah integer [not null, default: 1]
+  harga_layanan integer [not null, default: 0]
+  total integer [not null, default: 0]
+  status_transaksi text [not null, default: 'antrian'] // 'antrian' | 'proses' | 'selesai'
+  status_pembayaran text [not null, default: 'belum_lunas'] // 'belum_lunas' | 'lunas'
+  metode_pembayaran text // 'tunai' | 'transfer' | 'e_wallet' | 'qris'
+  bukti_pembayaran_url text
+  deadline timestamptz [not null]
+  created_at timestamptz [default: `now()`]
+  
+  Note: 'Tabel untuk menyimpan transaksi laundry. kode_struk dapat duplikat untuk beberapa transaksi dalam struk yang sama.'
+}
+
+// Table: pengeluaran (Expenses)
+Table pengeluaran {
+  id uuid [primary key, default: `gen_random_uuid()`]
+  id_users uuid
+  kategori text [not null]
+  deskripsi text [not null]
+  jumlah integer [not null, default: 0]
+  tanggal timestamptz [not null, default: `now()`]
+  created_at timestamptz [default: `now()`]
+  
+  Note: 'Tabel untuk mencatat pengeluaran usaha laundry'
+}
+
+// Relationships
+Ref: transaksi.id_pelanggan > pelanggan.id [delete: set null]
+Ref: transaksi.id_users > users.id [delete: set null]
+Ref: transaksi.id_layanan > layanan.id [delete: set null]
+Ref: pengeluaran.id_users > users.id [delete: set null]
+

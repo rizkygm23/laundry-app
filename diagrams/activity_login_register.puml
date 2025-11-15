@@ -1,0 +1,69 @@
+@startuml Activity Diagram - Login & Register
+title Activity Diagram - Login & Register
+
+|#LightBlue|User|
+start
+if (Sudah Login?) then (yes)
+  :Redirect ke Dashboard;
+  stop
+else (no)
+endif
+
+:Show Halaman Login;
+
+if (Pilih Aksi?) then (Login)
+  :Input Email & Password;
+  
+  |#LightGreen|Sistem|
+  if (Validate Login?) then (Invalid)
+    :Show Error Message;
+    |#LightBlue|User|
+    :Input Email & Password;
+  else (Valid)
+    :Authenticate via Supabase;
+    
+    if (Login Berhasil?) then (no)
+      :Show Error Message;
+      |#LightBlue|User|
+      :Input Email & Password;
+    else (yes)
+      :Set User Session;
+      :Redirect ke Dashboard;
+      stop
+    endif
+  endif
+  
+elseif (Register) then
+  |#LightBlue|User|
+  :Go to Register Page;
+  :Input: Nama, Email, Password, Confirm Password;
+  
+  |#LightGreen|Sistem|
+  if (Validate Form?) then (Invalid)
+    :Show Error Message;
+    |#LightBlue|User|
+    :Input: Nama, Email, Password, Confirm Password;
+  else (Valid)
+    if (Password Match?) then (no)
+      :Show Error Message;
+      |#LightBlue|User|
+      :Input: Nama, Email, Password, Confirm Password;
+    else (yes)
+      :Create Account via Supabase;
+      
+      if (Account Created?) then (no)
+        :Show Error Message;
+        |#LightBlue|User|
+        :Input: Nama, Email, Password, Confirm Password;
+      else (yes)
+        :Show Success Message;
+        :Redirect ke Login Page;
+        :Input Email & Password;
+      endif
+    endif
+  endif
+endif
+
+stop
+@enduml
+

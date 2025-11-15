@@ -1,0 +1,115 @@
+// ============================================
+// ERD - Laundry Management System
+// ============================================
+// Script ini dapat digunakan di https://dbdiagram.io
+// Copy-paste script ini ke editor dbdiagram.io untuk melihat ERD secara visual
+// ============================================
+
+// ============================================
+// Table: users
+// Deskripsi: Tabel untuk menyimpan data pengguna/admin sistem laundry
+// ============================================
+Table users {
+  id uuid [primary key, default: `gen_random_uuid()`]
+  username text [unique, not null, note: 'Username untuk login']
+  name text [not null, note: 'Nama lengkap pengguna']
+  alamat text [default: '', note: 'Alamat pengguna']
+  password text [not null, note: 'Password ter-hash']
+  nomor_hp text [default: '', note: 'Nomor telepon']
+  email text [unique, not null, note: 'Email pengguna']
+  created_at timestamptz [default: `now()`, note: 'Waktu pembuatan record']
+  
+  Note: 'Tabel untuk menyimpan data pengguna/admin sistem laundry'
+}
+
+// ============================================
+// Table: layanan
+// Deskripsi: Tabel untuk menyimpan daftar layanan laundry (kiloan/satuan)
+// ============================================
+Table layanan {
+  id uuid [primary key, default: `gen_random_uuid()`]
+  nama text [not null, note: 'Nama layanan']
+  jenis_layanan text [not null, note: 'Jenis layanan: kiloan atau satuan']
+  harga integer [not null, default: 0, note: 'Harga layanan dalam rupiah']
+  durasi_pengerjaan_jam integer [not null, default: 24, note: 'Durasi pengerjaan dalam jam']
+  created_at timestamptz [default: `now()`, note: 'Waktu pembuatan record']
+  
+  Note: 'Tabel untuk menyimpan daftar layanan laundry (kiloan/satuan)'
+}
+
+// ============================================
+// Table: pelanggan
+// Deskripsi: Tabel untuk menyimpan data pelanggan
+// ============================================
+Table pelanggan {
+  id uuid [primary key, default: `gen_random_uuid()`]
+  nama text [not null, note: 'Nama pelanggan']
+  nomor_hp text [not null, note: 'Nomor telepon pelanggan']
+  alamat text [default: '', note: 'Alamat pelanggan (opsional)']
+  created_at timestamptz [default: `now()`, note: 'Waktu pembuatan record']
+  
+  Note: 'Tabel untuk menyimpan data pelanggan laundry'
+}
+
+// ============================================
+// Table: transaksi
+// Deskripsi: Tabel untuk menyimpan transaksi laundry
+// ============================================
+Table transaksi {
+  id uuid [primary key, default: `gen_random_uuid()`]
+  kode_struk text [not null, note: 'Kode struk (dapat duplikat untuk beberapa item dalam struk yang sama)']
+  id_pelanggan uuid [note: 'Referensi ke tabel pelanggan']
+  id_users uuid [note: 'Referensi ke tabel users (admin yang membuat transaksi)']
+  id_layanan uuid [note: 'Referensi ke tabel layanan']
+  nama_layanan text [not null, note: 'Snapshot nama layanan saat transaksi dibuat']
+  nama_pelanggan text [not null, note: 'Snapshot nama pelanggan saat transaksi dibuat']
+  alamat_pelanggan text [default: '', note: 'Snapshot alamat pelanggan saat transaksi dibuat']
+  jumlah integer [not null, default: 1, note: 'Jumlah/quantity layanan']
+  harga_layanan integer [not null, default: 0, note: 'Snapshot harga layanan saat transaksi dibuat']
+  total integer [not null, default: 0, note: 'Total harga transaksi (jumlah × harga_layanan)']
+  status_transaksi text [not null, default: 'antrian', note: 'Status: antrian, proses, atau selesai']
+  status_pembayaran text [not null, default: 'belum_lunas', note: 'Status pembayaran: belum_lunas atau lunas']
+  metode_pembayaran text [note: 'Metode pembayaran: tunai, transfer, e_wallet, atau qris']
+  bukti_pembayaran_url text [note: 'URL bukti pembayaran di Supabase Storage']
+  deadline timestamptz [not null, note: 'Batas waktu penyelesaian transaksi']
+  created_at timestamptz [default: `now()`, note: 'Waktu pembuatan record']
+  
+  Note: 'Tabel untuk menyimpan transaksi laundry. Menggunakan snapshot data untuk historical accuracy.'
+}
+
+// ============================================
+// Table: pengeluaran
+// Deskripsi: Tabel untuk mencatat pengeluaran usaha laundry
+// ============================================
+Table pengeluaran {
+  id uuid [primary key, default: `gen_random_uuid()`]
+  id_users uuid [note: 'Referensi ke tabel users (opsional, siapa yang mencatat pengeluaran)']
+  kategori text [not null, note: 'Kategori pengeluaran (contoh: Operasional, Bahan Baku, Gaji, Sewa, Listrik, Air, Lainnya)']
+  deskripsi text [not null, note: 'Deskripsi detail pengeluaran']
+  jumlah integer [not null, default: 0, note: 'Jumlah pengeluaran dalam rupiah']
+  tanggal timestamptz [not null, default: `now()`, note: 'Tanggal pengeluaran']
+  created_at timestamptz [default: `now()`, note: 'Waktu pembuatan record']
+  
+  Note: 'Tabel untuk mencatat pengeluaran usaha laundry'
+}
+
+// ============================================
+// RELATIONSHIPS
+// ============================================
+
+// Relationship: transaksi -> pelanggan
+// Jika pelanggan dihapus, id_pelanggan di transaksi akan di-set NULL
+Ref: transaksi.id_pelanggan > pelanggan.id [delete: set null]
+
+// Relationship: transaksi -> users (admin yang membuat transaksi)
+// Jika user dihapus, id_users di transaksi akan di-set NULL
+Ref: transaksi.id_users > users.id [delete: set null]
+
+// Relationship: transaksi -> layanan
+// Jika layanan dihapus, id_layanan di transaksi akan di-set NULL
+Ref: transaksi.id_layanan > layanan.id [delete: set null]
+
+// Relationship: pengeluaran -> users (opsional, siapa yang mencatat)
+// Jika user dihapus, id_users di pengeluaran akan di-set NULL
+Ref: pengeluaran.id_users > users.id [delete: set null]
+

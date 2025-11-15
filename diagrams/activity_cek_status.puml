@@ -1,0 +1,38 @@
+@startuml Activity Diagram - Cek Status Transaksi (Pelanggan)
+title Activity Diagram - Cek Status Transaksi (Public)
+
+|#Yellow|Pelanggan|
+start
+:Akses Halaman Status /status/kode;
+
+|#LightGreen|Sistem|
+:Load Data Transaksi dari Database;
+
+if (Kode Valid?) then (no)
+  :Show: Kode Tidak Ditemukan;
+  stop
+else (yes)
+endif
+
+:Tampilkan Status Transaksi;
+:Subscribe ke Supabase Realtime;
+:Tampilkan Info: Kode, Nama, Layanan, Total;
+:Tampilkan Status: Antrian/Proses/Selesai;
+:Tampilkan Status Pembayaran;
+
+|#Yellow|Pelanggan|
+:Wait for Updates;
+
+|#LightGreen|Sistem|
+if (Status Berubah?) then (yes)
+  :Auto-refresh Status Display;
+  :Wait for Updates;
+elseif (User Refresh Page?) then (yes)
+  :Load Data Transaksi dari Database;
+else (no)
+  stop
+endif
+
+stop
+@enduml
+
