@@ -120,7 +120,7 @@ export default function StatusPage({ params }: { params: { kode: string } }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Memuat data...</p>
@@ -131,7 +131,7 @@ export default function StatusPage({ params }: { params: { kode: string } }) {
 
   if (!loading && !transaksiList.length) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <Card className="max-w-md w-full mx-4">
           <CardContent className="p-8 text-center">
             <div className="text-red-600 text-6xl mb-4">⚠️</div>
@@ -152,7 +152,7 @@ export default function StatusPage({ params }: { params: { kode: string } }) {
   const StatusIcon = statusInfo.icon;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 py-4 sm:py-8">
+    <div className="min-h-screen bg-white py-4 sm:py-8">
       <div className="container mx-auto px-3 sm:px-4 max-w-2xl">
         <div className="text-center mb-4 sm:mb-8">
           <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-2">Status Pesanan</h1>
@@ -212,7 +212,7 @@ export default function StatusPage({ params }: { params: { kode: string } }) {
         </div>
 
         <Card className="shadow-xl mb-4 sm:mb-6">
-          <CardHeader className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-4 sm:p-6">
+          <CardHeader className="bg-blue-600 text-white p-4 sm:p-6">
             <CardTitle className="text-center">
               <div className="text-xs sm:text-sm opacity-90 mb-1">Kode Transaksi</div>
               <div className="text-xl sm:text-3xl font-mono font-bold break-all">{transaksi.kode_struk}</div>
@@ -220,7 +220,7 @@ export default function StatusPage({ params }: { params: { kode: string } }) {
           </CardHeader>
           <CardContent className="p-4 sm:p-6">
             <div className="text-center mb-6 sm:mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-blue-100 to-cyan-100 mb-3 sm:mb-4">
+              <div className="inline-flex items-center justify-center w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-blue-100 mb-3 sm:mb-4">
                 <StatusIcon className="w-8 h-8 sm:w-12 sm:h-12 text-blue-600" />
               </div>
               <Badge variant="outline" className={`text-sm sm:text-lg px-4 sm:px-6 py-1 sm:py-2 ${statusInfo.color}`}>

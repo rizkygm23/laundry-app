@@ -145,43 +145,46 @@ export function QRScanActions({
           {transaksi.status_transaksi !== 'selesai' && (
             <div className="space-y-2 border-t pt-4">
               <h3 className="text-sm font-semibold text-gray-700">Update Status:</h3>
-              <div className="grid grid-cols-3 gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    onUpdateStatus?.(transaksi.id, 'antrian');
-                    onClose();
-                  }}
-                  disabled={transaksi.status_transaksi === 'antrian'}
-                >
-                  Antrian
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    onUpdateStatus?.(transaksi.id, 'proses');
-                    onClose();
-                  }}
-                  disabled={transaksi.status_transaksi === 'proses'}
-                >
-                  <Package className="mr-1 h-3 w-3" />
-                  Proses
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    onUpdateStatus?.(transaksi.id, 'selesai');
-                    onClose();
-                  }}
-                  disabled={transaksi.status_transaksi === 'selesai'}
-                  className="bg-green-50 hover:bg-green-100"
-                >
-                  <CheckCircle2 className="mr-1 h-3 w-3" />
-                  Selesai
-                </Button>
+              <div className="grid grid-cols-2 gap-2">
+                {transaksi.status_transaksi !== 'antrian' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      onUpdateStatus?.(transaksi.id, 'antrian');
+                      onClose();
+                    }}
+                  >
+                    Set Antrian
+                  </Button>
+                )}
+                {transaksi.status_transaksi !== 'proses' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      onUpdateStatus?.(transaksi.id, 'proses');
+                      onClose();
+                    }}
+                  >
+                    <Package className="mr-1 h-3 w-3" />
+                    Set Proses
+                  </Button>
+                )}
+                {transaksi.status_transaksi === 'proses' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      onUpdateStatus?.(transaksi.id, 'selesai');
+                      onClose();
+                    }}
+                    className="bg-green-50 hover:bg-green-100 text-green-700 border-green-300 col-span-2"
+                  >
+                    <CheckCircle2 className="mr-1 h-3 w-3" />
+                    Set Selesai
+                  </Button>
+                )}
               </div>
             </div>
           )}

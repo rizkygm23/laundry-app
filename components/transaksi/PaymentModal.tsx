@@ -269,7 +269,7 @@ export function PaymentModal({
 
         <div className="space-y-4 sm:space-y-6 py-2 sm:py-4">
           {/* Total Amount */}
-          <div className="rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 p-5 sm:p-6 shadow-lg">
+          <div className="rounded-xl bg-blue-500 p-5 sm:p-6 shadow-lg">
             <Label className="text-sm sm:text-base text-white/90 font-medium">Total Pembayaran</Label>
             <p className="text-2xl sm:text-3xl font-bold text-white mt-2">
               Rp {total.toLocaleString('id-ID')}
@@ -504,7 +504,7 @@ export function PaymentModal({
               className={`flex-1 h-12 sm:h-14 text-base sm:text-lg font-bold shadow-lg ${
                 paymentType === 'tunai' && !isChangeValid
                   ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white'
               }`}
               disabled={processing || uploading || (paymentType === 'tunai' && !isChangeValid)}
             >

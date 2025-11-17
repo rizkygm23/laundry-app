@@ -84,6 +84,11 @@
   }
 }
 
+/* Safe area for bottom navigation (iOS) */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 /* Print styles for QR code page */
 @media print {
   body * {

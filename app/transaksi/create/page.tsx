@@ -319,7 +319,7 @@ export default function CreateTransaksi() {
     <DashboardLayout>
       <div className="max-w-4xl mx-auto">
         <Card className="shadow-xl">
-          <CardHeader className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-4 sm:p-6">
+          <CardHeader className="bg-blue-600 text-white p-4 sm:p-6">
             <CardTitle className="text-xl sm:text-2xl">Buat Pesanan Baru</CardTitle>
           </CardHeader>
           <CardContent className="p-3 sm:p-6">

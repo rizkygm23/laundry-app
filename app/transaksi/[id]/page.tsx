@@ -64,7 +64,7 @@ export default function TransaksiDetailPage({ params }: { params: { id: string }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 py-4 sm:py-8">
+    <div className="min-h-screen bg-white py-4 sm:py-8">
       <div className="container mx-auto px-4 max-w-3xl">
         <Button variant="ghost" onClick={() => router.push('/')} className="mb-4 sm:mb-6 w-full sm:w-auto">
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -72,7 +72,7 @@ export default function TransaksiDetailPage({ params }: { params: { id: string }
         </Button>
 
         <Card className="shadow-xl">
-          <CardHeader className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white">
+          <CardHeader className="bg-blue-600 text-white">
             <CardTitle className="text-xl sm:text-2xl">Detail Transaksi</CardTitle>
           </CardHeader>
           <CardContent className="p-4 sm:p-6">

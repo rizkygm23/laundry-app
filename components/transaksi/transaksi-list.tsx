@@ -452,23 +452,31 @@ export default function TransaksiList({
                       <QrCode className="mr-2 h-4 w-4" />
                       Lihat QR Code
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => updateStatus(transaksi.id, 'antrian')}>
-                      Set Antrian
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => updateStatus(transaksi.id, 'proses')}>
-                      Set Proses
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => updateStatus(transaksi.id, 'selesai')}>
-                      Set Selesai
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setSelectedTransaksiForPayment(transaksi);
-                        setPaymentModalOpen(true);
-                      }}
-                    >
-                      Tandai Lunas
-                    </DropdownMenuItem>
+                    {transaksi.status_transaksi !== 'antrian' && (
+                      <DropdownMenuItem onClick={() => updateStatus(transaksi.id, 'antrian')}>
+                        Set Antrian
+                      </DropdownMenuItem>
+                    )}
+                    {transaksi.status_transaksi !== 'proses' && (
+                      <DropdownMenuItem onClick={() => updateStatus(transaksi.id, 'proses')}>
+                        Set Proses
+                      </DropdownMenuItem>
+                    )}
+                    {transaksi.status_transaksi === 'proses' && (
+                      <DropdownMenuItem onClick={() => updateStatus(transaksi.id, 'selesai')}>
+                        Set Selesai
+                      </DropdownMenuItem>
+                    )}
+                    {transaksi.status_pembayaran !== 'lunas' && (
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setSelectedTransaksiForPayment(transaksi);
+                          setPaymentModalOpen(true);
+                        }}
+                      >
+                        Tandai Lunas
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem
                       onClick={() => deleteTransaksi(transaksi.id)}
                       className="text-red-600"
@@ -670,26 +678,34 @@ export default function TransaksiList({
                       <QrCode className="mr-2 h-4 w-4" />
                       Lihat QR
                     </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setSelectedTransaksiForPayment(activeTransaksi);
-                        setPaymentModalOpen(true);
-                        closeActionModal();
-                      }}
-                      className="h-11 sm:h-10 text-sm"
-                    >
-                      Tandai Lunas
-                    </Button>
-                    <Button variant="outline" onClick={() => updateStatus(activeTransaksi.id, 'antrian')} className="h-11 sm:h-10 text-sm">
-                      Set Antrian
-                    </Button>
-                    <Button variant="outline" onClick={() => updateStatus(activeTransaksi.id, 'proses')} className="h-11 sm:h-10 text-sm">
-                      Set Proses
-                    </Button>
-                    <Button variant="outline" onClick={() => updateStatus(activeTransaksi.id, 'selesai')} className="h-11 sm:h-10 text-sm">
-                      Set Selesai
-                    </Button>
+                    {activeTransaksi.status_pembayaran !== 'lunas' && (
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedTransaksiForPayment(activeTransaksi);
+                          setPaymentModalOpen(true);
+                          closeActionModal();
+                        }}
+                        className="h-11 sm:h-10 text-sm"
+                      >
+                        Tandai Lunas
+                      </Button>
+                    )}
+                    {activeTransaksi.status_transaksi !== 'antrian' && (
+                      <Button variant="outline" onClick={() => updateStatus(activeTransaksi.id, 'antrian')} className="h-11 sm:h-10 text-sm">
+                        Set Antrian
+                      </Button>
+                    )}
+                    {activeTransaksi.status_transaksi !== 'proses' && (
+                      <Button variant="outline" onClick={() => updateStatus(activeTransaksi.id, 'proses')} className="h-11 sm:h-10 text-sm">
+                        Set Proses
+                      </Button>
+                    )}
+                    {activeTransaksi.status_transaksi === 'proses' && (
+                      <Button variant="outline" onClick={() => updateStatus(activeTransaksi.id, 'selesai')} className="h-11 sm:h-10 text-sm">
+                        Set Selesai
+                      </Button>
+                    )}
                     <Button variant="destructive" onClick={handleDeleteFromModal} className="h-11 sm:h-10 text-sm">
                       <Trash2 className="mr-2 h-4 w-4" />
                       Hapus Pesanan

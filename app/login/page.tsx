@@ -53,7 +53,7 @@ export default function LoginPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     );
@@ -64,9 +64,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="space-y-1 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-t-lg">
+        <CardHeader className="space-y-1 bg-blue-600 text-white rounded-t-lg">
           <CardTitle className="text-2xl font-bold text-center">Login</CardTitle>
           <CardDescription className="text-blue-100 text-center">
             Masuk ke akun Anda untuk mengelola laundry

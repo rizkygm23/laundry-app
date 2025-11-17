@@ -10,13 +10,10 @@ import {
   Package,
   Users,
   LogOut,
-  Menu,
-  X,
   ClipboardList,
   DollarSign,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,7 +36,6 @@ const navigation = [
 export function Sidebar() {
   const pathname = usePathname();
   const { user, signOut } = useAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const getUserInitials = () => {
     return user?.email?.charAt(0).toUpperCase() || 'U';
@@ -47,38 +43,16 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="bg-white shadow-md"
-        >
-          {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </Button>
-      </div>
-
-      {/* Sidebar */}
+      {/* Sidebar - Hidden on mobile, visible on desktop */}
       <aside
         className={cn(
-          'fixed top-0 left-0 z-40 h-screen w-64 bg-white border-r border-gray-200 transition-transform',
-          'lg:translate-x-0',
-          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+          'hidden lg:flex fixed top-0 left-0 z-40 h-screen w-64 bg-white border-r border-gray-200 flex-col'
         )}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
             <h1 className="text-xl font-bold text-blue-600">Necis Laundry</h1>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <X className="h-5 w-5" />
-            </Button>
           </div>
 
           {/* Navigation */}
@@ -89,7 +63,6 @@ export function Sidebar() {
                 <Link
                   key={item.name}
                   href={item.href}
-                  onClick={() => setMobileMenuOpen(false)}
                   className={cn(
                     'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors',
                     isActive ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'
@@ -141,14 +114,6 @@ export function Sidebar() {
           </div>
         </div>
       </aside>
-
-      {/* Overlay for mobile */}
-      {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
     </>
   );
 }
