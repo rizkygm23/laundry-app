@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard, shortName: 'Home' },
   { name: 'Transaksi', href: '/transaksi', icon: ClipboardList, shortName: 'Transaksi' },
-  { name: 'Keuangan', href: '/keuangan', icon: DollarSign, shortName: 'Keuangan' },
+  { name: 'Kas', href: '/kas', icon: DollarSign, shortName: 'Kas' },
   { name: 'Layanan', href: '/layanan', icon: Package, shortName: 'Layanan' },
   { name: 'Pelanggan', href: '/pelanggan', icon: Users, shortName: 'Pelanggan' },
 ];
@@ -26,9 +26,9 @@ export function BottomNavigation() {
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 lg:hidden safe-area-bottom">
       <div className="grid grid-cols-5 h-16">
         {navigation.map((item) => {
-          const isActive = pathname === item.href || 
+          const isActive = pathname === item.href ||
             (item.href !== '/' && pathname?.startsWith(item.href));
-          
+
           return (
             <Link
               key={item.name}

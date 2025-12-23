@@ -1,0 +1,59 @@
+@startuml
+title Layered Architecture - Laundry App
+
+skinparam backgroundColor #ffffff
+skinparam handwritten false
+skinparam shadowing false
+skinparam rectangle {
+  FontSize 14
+  FontColor black
+  RoundCorner 8
+  LineColor #39a2ff
+  LineThickness 2
+  BackgroundColor #f9fbff
+}
+
+rectangle "Web Browser Interface\nUI Pelanggan & Admin" as ui
+
+together {
+rectangle "Auth & Dashboard Shell\n`app/layout.tsx`\n`components/layout/*`" as login
+rectangle "Forms & Query Manager\nTransaksi & Pelanggan CRUD" as forms
+rectangle "Print / Struk Manager\n`app/struk/[kode]`" as print
+}
+
+together {
+rectangle "Status Tracker\n`app/status/[kode]`\n`components/transaksi/QRScanActions`" as status
+rectangle "Dokumen & Arsip\n`app/qr/[kode]`\n`app/transaksi/[id]`" as dok
+rectangle "Hak Akses & Proteksi\n`components/auth/ProtectedRoute`\n`contexts/AuthContext`" as rights
+rectangle "Akuntansi & Keuangan\n`app/keuangan`\n`app/transaksi/create`" as accounting
+}
+
+rectangle "Library / Laundry Index\n`app/page.tsx`\n`components/transaksi/transaksi-list`" as index
+
+together {
+rectangle "DB Transaksi" as db1
+rectangle "DB Pelanggan" as db2
+rectangle "DB Layanan" as db3
+rectangle "DB Pengeluaran" as db4
+rectangle "DB Storage / Bukti" as db5
+}
+
+ui -down-> login
+ui -down-> forms
+ui -down-> print
+login -down-> status
+forms -down-> dok
+print -down-> rights
+forms -down-> accounting
+status -down-> index
+dok -down-> index
+rights -down-> index
+accounting -down-> index
+index -down-> db1
+index -down-> db2
+index -down-> db3
+index -down-> db4
+index -down-> db5
+
+@enduml
+

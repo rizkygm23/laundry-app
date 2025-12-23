@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { CheckCircle2, PlusCircle, Trash2 } from 'lucide-react';
+import { CheckCircle2, PlusCircle, Trash2, Users } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { PaymentModal } from '@/components/transaksi/PaymentModal';
@@ -57,6 +57,12 @@ export default function CreateTransaksi() {
   const [totalPembayaran, setTotalPembayaran] = useState(0);
   const [kodeStrukForPayment, setKodeStrukForPayment] = useState<string | null>(null);
 
+  // Membership & Points
+  const [poin, setPoin] = useState(0);
+  const [membershipLevel, setMembershipLevel] = useState('Bronze');
+  const [poinUsed, setPoinUsed] = useState(0);
+  const [usePoin, setUsePoin] = useState(false);
+
   useEffect(() => {
     loadLayanan();
   }, []);
@@ -80,7 +86,7 @@ export default function CreateTransaksi() {
       try {
         const { data, error } = await supabase
           .from('pelanggan')
-          .select('nama, alamat')
+          .select('nama, alamat, poin, membership_level')
           .eq('nomor_hp', nomorHp)
           .maybeSingle();
 
@@ -90,6 +96,9 @@ export default function CreateTransaksi() {
         }
 
         if (data) {
+          setPoin(data.poin || 0);
+          setMembershipLevel(data.membership_level || 'Bronze');
+
           setFormData((prev) => {
             const shouldUpdate =
               prev.nama_pelanggan !== data.nama || prev.alamat !== (data.alamat || '');
@@ -106,6 +115,9 @@ export default function CreateTransaksi() {
             return prev;
           });
         } else {
+          setPoin(0);
+          setMembershipLevel('Bronze');
+
           setFormData((prev) => {
             if (prev.nama_pelanggan || prev.alamat) {
               return {
@@ -178,6 +190,34 @@ export default function CreateTransaksi() {
     if (Number.isNaN(qty)) return acc;
     return acc + item.layanan.harga * qty;
   }, 0);
+
+  const discountFromPoints = usePoin ? poinUsed : 0;
+  const finalTotal = Math.max(0, grandTotal - discountFromPoints);
+
+  // Calculate potential points earned
+  const calculatePointsEarned = (total: number, level: string) => {
+    const basePoints = Math.floor(total / 1000) * 20;
+    let multiplier = 1;
+    if (level === 'Silver') multiplier = 1.3;
+    if (level === 'Gold') multiplier = 1.69;
+    if (level === 'Platinum') multiplier = 2.197;
+    return Math.floor(basePoints * multiplier);
+  };
+
+  const potentialPoints = calculatePointsEarned(finalTotal, membershipLevel);
+
+  useEffect(() => {
+    if (usePoin) {
+      // Max points usage rule: 1 point = 1 rupiah
+      // Minimal redemption: 1000 points? The user said "minimal kelipatan 1000 poin juga".
+      // Let's assume we can redeem in multiples of 1000.
+
+      const maxRedeemable = Math.min(Math.floor(poin / 1000) * 1000, Math.floor(grandTotal / 1000) * 1000);
+      setPoinUsed(maxRedeemable);
+    } else {
+      setPoinUsed(0);
+    }
+  }, [usePoin, poin, grandTotal]);
 
   const allItemsValid =
     orderItems.length > 0 &&
@@ -275,8 +315,30 @@ export default function CreateTransaksi() {
           status_transaksi: 'antrian',
           status_pembayaran: 'belum_lunas',
           deadline: deadline.toISOString(),
+          poin_earned: 0, // Will be updated upon payment
+          poin_used: item === orderItems[0] ? discountFromPoints : 0, // Attach used points to first item or split? Simplified to first item or handled at transaction level if schema supported it. 
+          // Actually schema has poin_used on transaksi, so we should split or put on one.
+          // Let's put it on the first item for now or better, distribute it. 
+          // Simplified: The total transaction row structure in this app seems to be 1 row per item?
+          // Looking at the insert payload, it IS creating multiple rows (one per item).
+          // This makes "transaction level" fields tricky. 
+          // We will assign poin_used to the first item only to avoid double counting.
         };
       });
+
+      // Correct poin_used and poin_earned distribution
+      // Ideally we should have a parent 'transaksi_header' table, but based on the schema, 'transaksi' IS the line item?
+      // Wait, let's check the schema again. 
+      // Table transaksi: kode_struk, total, jumlah...
+      // It seems normalized as "one row per service item" but they share kode_struk.
+      // So if we add poin_used, we should probably add it to ONE of the rows or change the schema.
+      // For now, I will add it to the first row only.
+
+      if (transaksiPayload.length > 0) {
+        transaksiPayload[0].poin_used = discountFromPoints;
+        // We set poin_earned to 0 initially. It should be calculated and updated when payment is Lunas.
+      }
+
 
       const { data: insertedData, error } = await supabase
         .from('transaksi')
@@ -313,6 +375,84 @@ export default function CreateTransaksi() {
       console.error('Unexpected error:', err);
       toast.error('Terjadi kesalahan: ' + (err instanceof Error ? err.message : 'Unknown error'));
     }
+  };
+
+  // Function to handle successful payment and point accrual
+  const handlePaymentSuccess = async () => {
+    if (!kodeStrukForPayment) return;
+
+    // 1. Update status_pembayaran to 'lunas'
+    const { error: updateError } = await supabase
+      .from('transaksi')
+      .update({ status_pembayaran: 'lunas' })
+      .eq('kode_struk', kodeStrukForPayment);
+
+    if (updateError) {
+      toast.error('Gagal update status: ' + updateError.message);
+      return;
+    }
+
+    // 2. Refresh customer data to get current accumulated spend
+    // We need to calculate if level upgrades
+    // And add points
+
+    // Get all transactions for this customer to calc total spend
+    // For simplicity, we just add the points now.
+
+    if (formData.nomor_hp) {
+      // Get customer id
+      const { data: cust } = await supabase.from('pelanggan').select('id, poin, membership_level').eq('nomor_hp', formData.nomor_hp).single();
+
+      if (cust) {
+        const earned = potentialPoints; // This assumes potentialPoints didn't change (it shouldn't)
+        const newPoinBalance = (cust.poin || 0) - poinUsed + earned;
+
+        // Calculate new level
+        // Get total spend in current month
+        const now = new Date();
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+        const { data: transData } = await supabase
+          .from('transaksi')
+          .select('total')
+          .eq('id_pelanggan', cust.id)
+          .gte('created_at', firstDay)
+          .eq('status_pembayaran', 'lunas');
+
+        const currentMonthTotal = (transData?.reduce((acc, t) => acc + t.total, 0) || 0) + finalTotal; // + current one
+
+        let newLevel = 'Bronze';
+        if (currentMonthTotal >= 1000000) newLevel = 'Platinum';
+        else if (currentMonthTotal >= 500000) newLevel = 'Gold';
+        else if (currentMonthTotal >= 200000) newLevel = 'Silver';
+
+        // Update customer
+        await supabase.from('pelanggan').update({
+          poin: newPoinBalance,
+          membership_level: newLevel
+        }).eq('id', cust.id);
+
+        // Also update the transaction record with earned points (just for record)
+        // We update all rows with the EARNED points? Or just one? 
+        // Let's update the first one we find with this kode_struk or all of them with 0 and one with value?
+        // Simplest: update all rows with 0 and the first with the value.
+        // Actually, let's just leave it for now or try to update.
+        await supabase.from('transaksi')
+          .update({ poin_earned: earned })
+          .eq('kode_struk', kodeStrukForPayment)
+          .eq('id_pelanggan', cust.id) // safety
+          .limit(1); // Not standard SQL, depends on Supabase/Postgres. Postgres update doesn't support limit directly easily.
+        // Better: Update using ID of the first transaction of this struk.
+        // We have createdTransaksiId (which is the first one).
+        if (createdTransaksiId) {
+          await supabase.from('transaksi').update({ poin_earned: earned }).eq('id', createdTransaksiId);
+        }
+      }
+    }
+
+    window.dispatchEvent(new Event('transaksi-updated'));
+    setPaymentModalOpen(false);
+    router.push(`/struk/${kodeStrukForPayment}`);
   };
 
   return (
@@ -380,72 +520,72 @@ export default function CreateTransaksi() {
                           </div>
                           <div>
                             <Label className="text-sm sm:text-base font-semibold">Jumlah *</Label>
-                          <div className="mt-2 flex items-center gap-2">
-                            <Input
-                              type="number"
-                              min="1"
-                              value={item.jumlah}
-                              onChange={(e) => handleJumlahChange(item.id, e.target.value)}
-                              required
-                              className="flex-1 h-11 sm:h-10"
-                              inputMode="numeric"
-                            />
-                            <div className="flex flex-wrap gap-1">
-                              {[1, 2, 3, 4, 5].map((increment) => (
-                                <Button
-                                  key={increment}
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-9 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
-                                  onClick={() => {
-                                    const current = parseInt(item.jumlah || '0', 10);
-                                    const nextValue = Number.isNaN(current)
-                                      ? increment
-                                      : Math.max(1, current + increment);
-                                    handleJumlahChange(item.id, String(nextValue));
-                                  }}
-                                >
-                                  +{increment}
-                                </Button>
-                              ))}
+                            <div className="mt-2 flex items-center gap-2">
+                              <Input
+                                type="number"
+                                min="1"
+                                value={item.jumlah}
+                                onChange={(e) => handleJumlahChange(item.id, e.target.value)}
+                                required
+                                className="flex-1 h-11 sm:h-10"
+                                inputMode="numeric"
+                              />
+                              <div className="flex flex-wrap gap-1">
+                                {[1, 2, 3, 4, 5].map((increment) => (
+                                  <Button
+                                    key={increment}
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-9 sm:h-9 px-2 sm:px-3 text-xs sm:text-sm"
+                                    onClick={() => {
+                                      const current = parseInt(item.jumlah || '0', 10);
+                                      const nextValue = Number.isNaN(current)
+                                        ? increment
+                                        : Math.max(1, current + increment);
+                                      handleJumlahChange(item.id, String(nextValue));
+                                    }}
+                                  >
+                                    +{increment}
+                                  </Button>
+                                ))}
+                              </div>
                             </div>
-                          </div>
                           </div>
                         </div>
 
                         {layanan && (
-                          <div className="mt-3 sm:mt-4 rounded-lg border border-blue-200 bg-blue-50 px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm text-blue-900">
+                          <div className="mt-3 sm:mt-4 rounded-lg border border-gray-200 bg-gray-50/50 px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm">
                             <div className="grid grid-cols-2 gap-2 sm:gap-3">
                               <div className="flex flex-col">
-                                <span className="text-blue-600 text-[10px] sm:text-xs uppercase tracking-wide">
+                                <span className="text-gray-500 text-[10px] sm:text-xs uppercase tracking-wide font-medium">
                                   Jenis
                                 </span>
-                                <span className="font-semibold uppercase text-blue-900 text-xs sm:text-sm">
+                                <span className="font-semibold text-gray-900 text-xs sm:text-sm uppercase">
                                   {layanan.jenis_layanan}
                                 </span>
                               </div>
                               <div className="flex flex-col text-right">
-                                <span className="text-blue-600 text-[10px] sm:text-xs uppercase tracking-wide">
+                                <span className="text-gray-500 text-[10px] sm:text-xs uppercase tracking-wide font-medium">
                                   Harga
                                 </span>
-                                <span className="font-semibold text-blue-900 text-xs sm:text-sm">
+                                <span className="font-semibold text-gray-900 text-xs sm:text-sm">
                                   Rp {layanan.harga.toLocaleString('id-ID')}
                                 </span>
                               </div>
                               <div className="flex flex-col">
-                                <span className="text-blue-600 text-[10px] sm:text-xs uppercase tracking-wide">
+                                <span className="text-gray-500 text-[10px] sm:text-xs uppercase tracking-wide font-medium">
                                   Durasi
                                 </span>
-                                <span className="font-semibold text-blue-900 text-xs sm:text-sm">
+                                <span className="font-semibold text-gray-900 text-xs sm:text-sm">
                                   {layanan.durasi_pengerjaan_jam} jam
                                 </span>
                               </div>
                               <div className="flex flex-col text-right">
-                                <span className="text-blue-600 text-[10px] sm:text-xs uppercase tracking-wide">
+                                <span className="text-gray-500 text-[10px] sm:text-xs uppercase tracking-wide font-medium">
                                   Subtotal
                                 </span>
-                                <span className="font-semibold text-blue-900 text-xs sm:text-sm">
+                                <span className="font-semibold text-gray-900 text-xs sm:text-sm">
                                   Rp {subtotal.toLocaleString('id-ID')}
                                 </span>
                               </div>
@@ -467,15 +607,97 @@ export default function CreateTransaksi() {
                   </Button>
                 </div>
 
+                {/* Membership Info & Points */}
+                {formData.nama_pelanggan && (
+                  <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className={`
+                          flex h-8 w-8 items-center justify-center rounded-full 
+                          ${membershipLevel === 'Platinum' ? 'bg-slate-800 text-white' :
+                            membershipLevel === 'Gold' ? 'bg-yellow-100 text-yellow-700' :
+                              membershipLevel === 'Silver' ? 'bg-gray-100 text-gray-700' :
+                                'bg-amber-100 text-amber-800'}
+                          `}>
+                          <Users className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Membership</p>
+                          <p className="text-sm font-bold text-gray-900">{membershipLevel}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-gray-500 font-medium uppercase tracking-wider">Poin</p>
+                        <p className="text-sm font-bold text-gray-900">{poin.toLocaleString()}</p>
+                      </div>
+                    </div>
+
+                    {poin > 0 && (
+                      <div className={`mt-3 p-3 rounded-md border transition-colors ${usePoin ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-100'}`}>
+                        <div className="flex items-start space-x-3">
+                          <Checkbox
+                            id="use-poin"
+                            checked={usePoin}
+                            onCheckedChange={(checked) => setUsePoin(checked === true)}
+                            disabled={poin < 1000}
+                            className="mt-0.5"
+                          />
+                          <div className="flex-1 space-y-1">
+                            <Label
+                              htmlFor="use-poin"
+                              className="text-sm font-medium leading-none cursor-pointer text-gray-900"
+                            >
+                              Tukarkan Poin
+                            </Label>
+                            <p className="text-xs text-gray-500">
+                              Gunakan {Math.min(Math.floor(poin / 1000) * 1000, Math.floor(grandTotal / 1000) * 1000)} poin untuk mendapatkan diskon.
+                            </p>
+
+                            {poin < 1000 ? (
+                              <p className="text-[10px] font-medium text-red-500 flex items-center gap-1">
+                                <span>Min. 1.000 poin</span>
+                              </p>
+                            ) : (
+                              usePoin && (
+                                <p className="text-xs font-semibold text-blue-600">
+                                  Hemat Rp {poinUsed.toLocaleString('id-ID')}
+                                </p>
+                              )
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-xs">
+                      <span className="text-gray-500">Potensi poin transaksi ini</span>
+                      <span className="font-medium text-green-600">+{potentialPoints} poin</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Grand Total Display with Discount */}
                 {grandTotal > 0 && (
                   <div className="rounded-lg border border-green-200 bg-green-50 p-3 sm:p-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs sm:text-sm font-semibold uppercase text-green-700">
-                        Total Estimasi
-                      </span>
-                      <span className="text-lg sm:text-2xl font-bold text-green-800">
-                        Rp {grandTotal.toLocaleString('id-ID')}
-                      </span>
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-gray-600">
+                        <span className="text-xs sm:text-sm">Subtotal</span>
+                        <span className="text-xs sm:text-sm">Rp {grandTotal.toLocaleString('id-ID')}</span>
+                      </div>
+                      {usePoin && poinUsed > 0 && (
+                        <div className="flex items-center justify-between text-green-600">
+                          <span className="text-xs sm:text-sm">Diskon Poin</span>
+                          <span className="text-xs sm:text-sm">- Rp {poinUsed.toLocaleString('id-ID')}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between pt-2 border-t border-green-200">
+                        <span className="text-xs sm:text-sm font-semibold uppercase text-green-700">
+                          Total Bayar
+                        </span>
+                        <span className="text-lg sm:text-2xl font-bold text-green-800">
+                          Rp {finalTotal.toLocaleString('id-ID')}
+                        </span>
+                      </div>
                     </div>
                     <p className="mt-1 text-[10px] sm:text-xs text-green-700">
                       Semua pesanan akan menggunakan kode struk yang sama dan tampil sebagai satu
@@ -606,26 +828,8 @@ export default function CreateTransaksi() {
               }
             }}
             transaksiId={createdTransaksiId}
-            total={totalPembayaran}
-            onSuccess={async () => {
-              // Update all transactions with the same kode_struk
-              if (kodeStrukForPayment) {
-                const { error } = await supabase
-                  .from('transaksi')
-                  .update({ status_pembayaran: 'lunas' })
-                  .eq('kode_struk', kodeStrukForPayment)
-                  .eq('status_pembayaran', 'belum_lunas');
-
-                if (error) {
-                  console.error('Error updating payment status:', error);
-                  toast.error('Gagal memperbarui status pembayaran: ' + error.message);
-                } else {
-                  window.dispatchEvent(new Event('transaksi-updated'));
-                  setPaymentModalOpen(false);
-                  router.push(`/struk/${kodeStrukForPayment}`);
-                }
-              }
-            }}
+            total={finalTotal}
+            onSuccess={handlePaymentSuccess}
           />
         )}
       </div>

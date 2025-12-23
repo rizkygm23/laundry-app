@@ -351,10 +351,10 @@ export default function KeuanganPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Keuangan</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Kas</h1>
             <p className="text-gray-600 mt-1">Pantau keuangan usaha laundry Anda</p>
           </div>
-          
+
           {/* Timeframe Tabs */}
           <Tabs value={timeframe} onValueChange={(value) => setTimeframe(value as Timeframe)}>
             <TabsList className="grid grid-cols-4 w-full sm:w-auto">
@@ -552,72 +552,72 @@ export default function KeuanganPage() {
               </CardContent>
             </Card>
 
-          {/* Pengeluaran */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <CardTitle className="text-base sm:text-lg">Pengeluaran</CardTitle>
-              <Button onClick={() => handleOpenDialog()} className="bg-blue-600 hover:bg-blue-700" size="sm">
-                <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                <span className="text-xs sm:text-sm">Tambah</span>
-              </Button>
-            </CardHeader>
-            <CardContent className="p-3 sm:p-6">
-              {pengeluaranList.length === 0 ? (
-                <p className="text-center text-gray-500 py-4 text-sm">Belum ada pengeluaran</p>
-              ) : (
-                <div className="rounded-md border max-h-[400px] sm:max-h-[600px] overflow-y-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="text-[10px] sm:text-xs p-2">Tanggal</TableHead>
-                        <TableHead className="text-[10px] sm:text-xs p-2">Kategori</TableHead>
-                        <TableHead className="text-[10px] sm:text-xs p-2 hidden sm:table-cell">Deskripsi</TableHead>
-                        <TableHead className="text-right text-[10px] sm:text-xs p-2">Jumlah</TableHead>
-                        <TableHead className="text-right text-[10px] sm:text-xs p-2">Aksi</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {pengeluaranList.slice(0, 10).map((p) => (
-                        <TableRow key={p.id}>
-                          <TableCell className="text-[10px] sm:text-xs p-2">
-                            {format(new Date(p.tanggal), 'dd MMM yyyy', { locale: idLocale })}
-                          </TableCell>
-                          <TableCell className="p-2">
-                            <Badge variant="outline" className="text-[10px] sm:text-xs">{p.kategori}</Badge>
-                          </TableCell>
-                          <TableCell className="text-[10px] sm:text-xs p-2 hidden sm:table-cell truncate max-w-[150px]">{p.deskripsi}</TableCell>
-                          <TableCell className="text-right font-semibold text-red-600 text-[10px] sm:text-xs p-2">
-                            Rp {p.jumlah.toLocaleString('id-ID')}
-                          </TableCell>
-                          <TableCell className="text-right p-2">
-                            <div className="flex justify-end gap-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleOpenDialog(p)}
-                                className="h-6 w-6 sm:h-7 sm:w-7 p-0"
-                              >
-                                <Edit className="h-3 w-3" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeletePengeluaran(p.id)}
-                                className="text-red-600 hover:text-red-700 h-6 w-6 sm:h-7 sm:w-7 p-0"
-                              >
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </TableCell>
+            {/* Pengeluaran */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-3">
+                <CardTitle className="text-base sm:text-lg">Pengeluaran</CardTitle>
+                <Button onClick={() => handleOpenDialog()} className="bg-blue-600 hover:bg-blue-700" size="sm">
+                  <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                  <span className="text-xs sm:text-sm">Tambah</span>
+                </Button>
+              </CardHeader>
+              <CardContent className="p-3 sm:p-6">
+                {pengeluaranList.length === 0 ? (
+                  <p className="text-center text-gray-500 py-4 text-sm">Belum ada pengeluaran</p>
+                ) : (
+                  <div className="rounded-md border max-h-[400px] sm:max-h-[600px] overflow-y-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-[10px] sm:text-xs p-2">Tanggal</TableHead>
+                          <TableHead className="text-[10px] sm:text-xs p-2">Kategori</TableHead>
+                          <TableHead className="text-[10px] sm:text-xs p-2 hidden sm:table-cell">Deskripsi</TableHead>
+                          <TableHead className="text-right text-[10px] sm:text-xs p-2">Jumlah</TableHead>
+                          <TableHead className="text-right text-[10px] sm:text-xs p-2">Aksi</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                      </TableHeader>
+                      <TableBody>
+                        {pengeluaranList.slice(0, 10).map((p) => (
+                          <TableRow key={p.id}>
+                            <TableCell className="text-[10px] sm:text-xs p-2">
+                              {format(new Date(p.tanggal), 'dd MMM yyyy', { locale: idLocale })}
+                            </TableCell>
+                            <TableCell className="p-2">
+                              <Badge variant="outline" className="text-[10px] sm:text-xs">{p.kategori}</Badge>
+                            </TableCell>
+                            <TableCell className="text-[10px] sm:text-xs p-2 hidden sm:table-cell truncate max-w-[150px]">{p.deskripsi}</TableCell>
+                            <TableCell className="text-right font-semibold text-red-600 text-[10px] sm:text-xs p-2">
+                              Rp {p.jumlah.toLocaleString('id-ID')}
+                            </TableCell>
+                            <TableCell className="text-right p-2">
+                              <div className="flex justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleOpenDialog(p)}
+                                  className="h-6 w-6 sm:h-7 sm:w-7 p-0"
+                                >
+                                  <Edit className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeletePengeluaran(p.id)}
+                                  className="text-red-600 hover:text-red-700 h-6 w-6 sm:h-7 sm:w-7 p-0"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         )}
 
         {/* Dialog Tambah/Edit Pengeluaran */}

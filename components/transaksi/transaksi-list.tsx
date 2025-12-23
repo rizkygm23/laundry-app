@@ -113,9 +113,9 @@ export default function TransaksiList({
       } else if (data) {
         const filtered = excludeCompleted
           ? data.filter(
-              (item) =>
-                !(item.status_transaksi === 'selesai' && item.status_pembayaran === 'lunas')
-            )
+            (item) =>
+              !(item.status_transaksi === 'selesai' && item.status_pembayaran === 'lunas')
+          )
           : data;
 
         setTransaksiList(filtered);
@@ -221,17 +221,89 @@ export default function TransaksiList({
   const handlePaymentSuccess = async () => {
     await loadTransaksi();
     if (onUpdate) onUpdate();
-    
+
     // Check if transaction is completed and paid, then close modal
     if (selectedTransaksiForPayment) {
-      const { data: updatedData } = await supabase
-        .from('transaksi')
-        .select('status_transaksi, status_pembayaran')
-        .eq('id', selectedTransaksiForPayment.id)
-        .single();
+      // CALCULATE POINTS AND UPDATE LEVEL
+      try {
+        // 1. Get full transaction details to ensure we have customer ID and total
+        const { data: trx } = await supabase
+          .from('transaksi')
+          .select('*')
+          .eq('id', selectedTransaksiForPayment.id)
+          .single();
 
-      if (updatedData && updatedData.status_transaksi === 'selesai' && updatedData.status_pembayaran === 'lunas') {
-        closeActionModal();
+        if (trx && trx.id_pelanggan && trx.status_pembayaran === 'lunas') {
+          // 2. Calculate points earned
+          // Check if points already earned? 'poin_earned' column might be 0 or null.
+          // If we assume this handler is ONLY called when it transitions to 'lunas' for the first time...
+          // checking poin_earned > 0 might prevent double counting, but let's assume valid flow.
+
+          // Fetch customer
+          const { data: cust } = await supabase.from('pelanggan').select('id, poin, membership_level').eq('id', trx.id_pelanggan).single();
+
+          if (cust) {
+            const currentLevel = cust.membership_level || 'Bronze';
+            const total = trx.total;
+
+            // Calculate points
+            const basePoints = Math.floor(total / 1000) * 20;
+            let multiplier = 1;
+            if (currentLevel === 'Silver') multiplier = 1.3;
+            if (currentLevel === 'Gold') multiplier = 1.69;
+            if (currentLevel === 'Platinum') multiplier = 2.197;
+
+            const earned = Math.floor(basePoints * multiplier);
+
+            // Only add points if not already added? 
+            // We can check if `poin_earned` in transaction is 0. 
+            if (trx.poin_earned === 0) {
+              const newPoinBalance = (cust.poin || 0) + earned;
+
+              // Calculate new level
+              const now = new Date();
+              const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+              const { data: transData } = await supabase
+                .from('transaksi')
+                .select('total')
+                .eq('id_pelanggan', cust.id)
+                .gte('created_at', firstDay)
+                .eq('status_pembayaran', 'lunas');
+
+              const currentMonthTotal = (transData?.reduce((acc, t) => acc + t.total, 0) || 0); // trx.total is already in transData if we queried after update? Yes likely.
+
+              let newLevel = 'Bronze';
+              if (currentMonthTotal >= 1000000) newLevel = 'Platinum';
+              else if (currentMonthTotal >= 500000) newLevel = 'Gold';
+              else if (currentMonthTotal >= 200000) newLevel = 'Silver';
+
+              // Update customer
+              await supabase.from('pelanggan').update({
+                poin: newPoinBalance,
+                membership_level: newLevel
+              }).eq('id', cust.id);
+
+              // Update transaction with earned points
+              await supabase.from('transaksi').update({ poin_earned: earned }).eq('id', trx.id);
+
+              console.log(`Points added: ${earned}, New Level: ${newLevel}`);
+            }
+          }
+        }
+
+        // Close modal if fully completed
+        const { data: updatedData } = await supabase
+          .from('transaksi')
+          .select('status_transaksi, status_pembayaran')
+          .eq('id', selectedTransaksiForPayment.id)
+          .single();
+
+        if (updatedData && updatedData.status_transaksi === 'selesai' && updatedData.status_pembayaran === 'lunas') {
+          closeActionModal();
+        }
+      } catch (err) {
+        console.error("Error updating points in dashboard:", err);
       }
     }
   };
@@ -378,11 +450,11 @@ export default function TransaksiList({
             <TableHead className="font-semibold text-xs sm:text-sm hidden md:table-cell">Layanan</TableHead>
             <TableHead className="font-semibold text-xs sm:text-sm hidden lg:table-cell">Jumlah</TableHead>
             <TableHead className="font-semibold text-xs sm:text-sm">Total</TableHead>
-              <TableHead className="font-semibold text-xs sm:text-sm">Status</TableHead>
-              <TableHead className="font-semibold text-xs sm:text-sm hidden md:table-cell">Pembayaran</TableHead>
-              <TableHead className="font-semibold text-xs sm:text-sm hidden lg:table-cell">Deadline</TableHead>
-              <TableHead className="font-semibold text-xs sm:text-sm hidden lg:table-cell">Bukti</TableHead>
-              <TableHead className="font-semibold text-right text-xs sm:text-sm">Aksi</TableHead>
+            <TableHead className="font-semibold text-xs sm:text-sm">Status</TableHead>
+            <TableHead className="font-semibold text-xs sm:text-sm hidden md:table-cell">Pembayaran</TableHead>
+            <TableHead className="font-semibold text-xs sm:text-sm hidden lg:table-cell">Deadline</TableHead>
+            <TableHead className="font-semibold text-xs sm:text-sm hidden lg:table-cell">Bukti</TableHead>
+            <TableHead className="font-semibold text-right text-xs sm:text-sm">Aksi</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -499,16 +571,16 @@ export default function TransaksiList({
       {transaksiList.map((transaksi) => {
         const accentClass = cardAccent[transaksi.status_transaksi] || cardAccent.default;
         const deadlineDate = new Date(transaksi.deadline);
-    const diffMs = deadlineDate.getTime() - Date.now();
-    const diffHours = Math.max(0, Math.floor(Math.abs(diffMs) / (1000 * 60 * 60)));
-    const diffMinutes = Math.max(
-      0,
-      Math.floor((Math.abs(diffMs) % (1000 * 60 * 60)) / (1000 * 60))
-    );
-    const isLate = diffMs < 0;
-    const deadlineLabel = isLate
-      ? `Terlambat ${diffHours}j ${diffMinutes}m`
-      : `Selesai ${diffHours}j ${diffMinutes}m lagi`;
+        const diffMs = deadlineDate.getTime() - Date.now();
+        const diffHours = Math.max(0, Math.floor(Math.abs(diffMs) / (1000 * 60 * 60)));
+        const diffMinutes = Math.max(
+          0,
+          Math.floor((Math.abs(diffMs) % (1000 * 60 * 60)) / (1000 * 60))
+        );
+        const isLate = diffMs < 0;
+        const deadlineLabel = isLate
+          ? `Terlambat ${diffHours}j ${diffMinutes}m`
+          : `Selesai ${diffHours}j ${diffMinutes}m lagi`;
 
         return (
           <Card

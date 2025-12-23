@@ -28,7 +28,7 @@ const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'Pesanan Baru', href: '/transaksi/create', icon: PlusCircle },
   { name: 'Transaksi', href: '/transaksi', icon: ClipboardList },
-  { name: 'Keuangan', href: '/keuangan', icon: DollarSign },
+  { name: 'Kas', href: '/kas', icon: DollarSign },
   { name: 'Layanan', href: '/layanan', icon: Package },
   { name: 'Pelanggan', href: '/pelanggan', icon: Users },
 ];

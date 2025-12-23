@@ -247,15 +247,7 @@ export function PaymentModal({
     }
   };
 
-  // Color scheme for denomination buttons
-  const getDenominationColor = (amount: number) => {
-    if (amount >= 50000) return 'bg-purple-100 hover:bg-purple-200 border-purple-300 text-purple-800';
-    if (amount >= 20000) return 'bg-blue-100 hover:bg-blue-200 border-blue-300 text-blue-800';
-    if (amount >= 10000) return 'bg-green-100 hover:bg-green-200 border-green-300 text-green-800';
-    if (amount >= 5000) return 'bg-yellow-100 hover:bg-yellow-200 border-yellow-300 text-yellow-800';
-    if (amount >= 2000) return 'bg-orange-100 hover:bg-orange-200 border-orange-300 text-orange-800';
-    return 'bg-gray-100 hover:bg-gray-200 border-gray-300 text-gray-800';
-  };
+
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -331,7 +323,6 @@ export function PaymentModal({
                 </p>
               </div>
 
-              {/* Denomination Buttons */}
               <div className="space-y-3">
                 <Label className="text-sm sm:text-base font-semibold text-gray-700">
                   Klik Pecahan Uang
@@ -343,7 +334,7 @@ export function PaymentModal({
                       type="button"
                       variant="outline"
                       onClick={() => handleCashDenomination(amount)}
-                      className={`h-14 sm:h-16 text-sm sm:text-base font-bold border-2 transition-all active:scale-95 ${getDenominationColor(amount)}`}
+                      className={`h-14 sm:h-16 text-sm sm:text-base font-medium border transition-all active:scale-95 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300`}
                       disabled={processing || uploading}
                     >
                       {amount >= 1000 ? `${(amount / 1000).toLocaleString('id-ID')}rb` : amount.toLocaleString('id-ID')}
@@ -354,7 +345,7 @@ export function PaymentModal({
                   type="button"
                   variant="outline"
                   onClick={() => setCashPaid('')}
-                  className="w-full h-12 text-sm font-semibold border-red-300 text-red-700 hover:bg-red-50"
+                  className="w-full h-12 text-sm font-semibold border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
                   disabled={processing || uploading || !cashPaid}
                 >
                   Reset
@@ -363,22 +354,20 @@ export function PaymentModal({
 
               {/* Change Display */}
               <div
-                className={`rounded-xl p-5 sm:p-6 border-2 shadow-md ${
-                  isChangeValid
-                    ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-300'
-                    : cashPaidNum > 0
-                      ? 'bg-gradient-to-r from-red-50 to-rose-50 border-red-300'
-                      : 'bg-gray-50 border-gray-200'
-                }`}
+                className={`rounded-xl p-5 sm:p-6 border shadow-sm transition-colors ${isChangeValid
+                  ? 'bg-white border-gray-200'
+                  : cashPaidNum > 0
+                    ? 'bg-red-50 border-red-200'
+                    : 'bg-white border-gray-200'
+                  }`}
               >
                 <div className="flex items-center justify-between mb-2">
                   <Label className="text-base sm:text-lg font-bold text-gray-700">
                     Kembalian
                   </Label>
                   <p
-                    className={`text-2xl sm:text-3xl font-bold ${
-                      isChangeValid ? 'text-green-700' : cashPaidNum > 0 ? 'text-red-700' : 'text-gray-500'
-                    }`}
+                    className={`text-2xl sm:text-3xl font-bold ${isChangeValid ? 'text-green-600' : cashPaidNum > 0 ? 'text-red-600' : 'text-gray-400'
+                      }`}
                   >
                     {isChangeValid
                       ? `Rp ${change.toLocaleString('id-ID')}`
@@ -501,11 +490,10 @@ export function PaymentModal({
             <Button
               type="button"
               onClick={handleSubmit}
-              className={`flex-1 h-12 sm:h-14 text-base sm:text-lg font-bold shadow-lg ${
-                paymentType === 'tunai' && !isChangeValid
-                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'
-              }`}
+              className={`flex-1 h-12 sm:h-14 text-base sm:text-lg font-bold shadow-lg ${paymentType === 'tunai' && !isChangeValid
+                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
               disabled={processing || uploading || (paymentType === 'tunai' && !isChangeValid)}
             >
               {processing || uploading ? (
