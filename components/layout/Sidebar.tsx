@@ -12,6 +12,7 @@ import {
   LogOut,
   ClipboardList,
   DollarSign,
+  Settings,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -25,12 +26,13 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Pesanan Baru', href: '/transaksi/create', icon: PlusCircle },
   { name: 'Transaksi', href: '/transaksi', icon: ClipboardList },
   { name: 'Kas', href: '/kas', icon: DollarSign },
   { name: 'Layanan', href: '/layanan', icon: Package },
   { name: 'Pelanggan', href: '/pelanggan', icon: Users },
+  { name: 'Pengaturan', href: '/dashboard/settings', icon: Settings },
 ];
 
 export function Sidebar() {

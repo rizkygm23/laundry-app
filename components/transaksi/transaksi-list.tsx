@@ -70,6 +70,8 @@ interface TransaksiListProps {
 }
 
 const cardAccent: Record<string, string> = {
+  penjemputan: 'border-l-4 border-l-purple-500 bg-purple-50/60',
+  terkirim: 'border-l-4 border-l-blue-500 bg-blue-50/60',
   antrian: 'border-l-4 border-l-amber-500 bg-amber-50/60',
   proses: 'border-l-4 border-l-cyan-500 bg-cyan-50/60',
   selesai: 'border-l-4 border-l-green-500 bg-green-50/60',
@@ -336,6 +338,10 @@ export default function TransaksiList({
 
   const getStatusColor = (status: string) => {
     switch (status) {
+      case 'penjemputan':
+        return 'bg-purple-100 text-purple-800 border-purple-300';
+      case 'terkirim':
+        return 'bg-blue-100 text-blue-800 border-blue-300';
       case 'antrian':
         return 'bg-amber-100 text-amber-800 border-amber-300';
       case 'proses':
@@ -524,12 +530,12 @@ export default function TransaksiList({
                       <QrCode className="mr-2 h-4 w-4" />
                       Lihat QR Code
                     </DropdownMenuItem>
-                    {transaksi.status_transaksi !== 'antrian' && (
+                    {transaksi.status_transaksi === 'penjemputan' && (
                       <DropdownMenuItem onClick={() => updateStatus(transaksi.id, 'antrian')}>
-                        Set Antrian
+                        Terima & Masuk Antrian
                       </DropdownMenuItem>
                     )}
-                    {transaksi.status_transaksi !== 'proses' && (
+                    {transaksi.status_transaksi === 'antrian' && (
                       <DropdownMenuItem onClick={() => updateStatus(transaksi.id, 'proses')}>
                         Set Proses
                       </DropdownMenuItem>
@@ -537,6 +543,11 @@ export default function TransaksiList({
                     {transaksi.status_transaksi === 'proses' && (
                       <DropdownMenuItem onClick={() => updateStatus(transaksi.id, 'selesai')}>
                         Set Selesai
+                      </DropdownMenuItem>
+                    )}
+                    {transaksi.status_transaksi === 'selesai' && (
+                      <DropdownMenuItem onClick={() => updateStatus(transaksi.id, 'terkirim')}>
+                        Set Terkirim
                       </DropdownMenuItem>
                     )}
                     {transaksi.status_pembayaran !== 'lunas' && (
@@ -763,12 +774,12 @@ export default function TransaksiList({
                         Tandai Lunas
                       </Button>
                     )}
-                    {activeTransaksi.status_transaksi !== 'antrian' && (
+                    {activeTransaksi.status_transaksi === 'penjemputan' && (
                       <Button variant="outline" onClick={() => updateStatus(activeTransaksi.id, 'antrian')} className="h-11 sm:h-10 text-sm">
-                        Set Antrian
+                        Terima & Antrian
                       </Button>
                     )}
-                    {activeTransaksi.status_transaksi !== 'proses' && (
+                    {activeTransaksi.status_transaksi === 'antrian' && (
                       <Button variant="outline" onClick={() => updateStatus(activeTransaksi.id, 'proses')} className="h-11 sm:h-10 text-sm">
                         Set Proses
                       </Button>
@@ -776,6 +787,11 @@ export default function TransaksiList({
                     {activeTransaksi.status_transaksi === 'proses' && (
                       <Button variant="outline" onClick={() => updateStatus(activeTransaksi.id, 'selesai')} className="h-11 sm:h-10 text-sm">
                         Set Selesai
+                      </Button>
+                    )}
+                    {activeTransaksi.status_transaksi === 'selesai' && (
+                      <Button variant="outline" onClick={() => updateStatus(activeTransaksi.id, 'terkirim')} className="h-11 sm:h-10 text-sm">
+                        Set Terkirim
                       </Button>
                     )}
                     <Button variant="destructive" onClick={handleDeleteFromModal} className="h-11 sm:h-10 text-sm">

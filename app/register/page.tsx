@@ -23,7 +23,7 @@ export default function RegisterPage() {
   // Redirect if already logged in
   useEffect(() => {
     if (!authLoading && user) {
-      router.push('/');
+      router.push('/dashboard');
     }
   }, [user, authLoading, router]);
 
@@ -51,7 +51,7 @@ export default function RegisterPage() {
         // If session is available (email confirmation disabled), auto-login
         if (data?.session) {
           toast.success('Registrasi berhasil! Anda sudah login.');
-          router.push('/');
+          router.push('/dashboard');
         } else {
           toast.success('Registrasi berhasil! Silakan login.');
           router.push('/login');

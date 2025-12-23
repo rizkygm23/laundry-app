@@ -52,6 +52,10 @@ export default function TransaksiDetailPage({ params }: { params: { id: string }
 
   const getStatusColor = (status: string) => {
     switch (status) {
+      case 'penjemputan':
+        return 'bg-purple-100 text-purple-800 border-purple-300';
+      case 'terkirim':
+        return 'bg-blue-100 text-blue-800 border-blue-300';
       case 'antrian':
         return 'bg-amber-100 text-amber-800 border-amber-300';
       case 'proses':
@@ -66,7 +70,7 @@ export default function TransaksiDetailPage({ params }: { params: { id: string }
   return (
     <div className="min-h-screen bg-white py-4 sm:py-8">
       <div className="container mx-auto px-4 max-w-3xl">
-        <Button variant="ghost" onClick={() => router.push('/')} className="mb-4 sm:mb-6 w-full sm:w-auto">
+        <Button variant="ghost" onClick={() => router.push('/dashboard')} className="mb-4 sm:mb-6 w-full sm:w-auto">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Kembali
         </Button>
@@ -149,7 +153,7 @@ export default function TransaksiDetailPage({ params }: { params: { id: string }
                     className={`text-xs sm:text-sm ${transaksi.status_pembayaran === 'lunas'
                       ? 'bg-green-100 text-green-800 border-green-300'
                       : 'bg-red-100 text-red-800 border-red-300'
-                    }`}
+                      }`}
                   >
                     {transaksi.status_pembayaran === 'lunas' ? 'LUNAS' : 'BELUM LUNAS'}
                   </Badge>

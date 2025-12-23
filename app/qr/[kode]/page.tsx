@@ -38,11 +38,11 @@ export default function QRPage({ params }: { params: { kode: string } }) {
 
   return (
     <div className="min-h-screen bg-white py-4 sm:py-8">
-        <div className="container mx-auto px-3 sm:px-4 max-w-2xl">
-          <Button variant="ghost" onClick={() => router.push('/')} className="mb-4 sm:mb-6 no-print w-full sm:w-auto h-11 sm:h-10">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Kembali
-          </Button>
+      <div className="container mx-auto px-3 sm:px-4 max-w-2xl">
+        <Button variant="ghost" onClick={() => router.push('/dashboard')} className="mb-4 sm:mb-6 no-print w-full sm:w-auto h-11 sm:h-10">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Kembali
+        </Button>
 
         <Card className="shadow-xl print-content">
           <CardHeader className="bg-blue-600 text-white no-print p-4 sm:p-6">

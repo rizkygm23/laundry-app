@@ -807,7 +807,7 @@ export default function CreateTransaksi() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => router.push('/')}
+                  onClick={() => router.push('/dashboard')}
                   className="h-11 sm:h-12"
                 >
                   Batal

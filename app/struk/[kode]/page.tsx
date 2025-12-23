@@ -125,7 +125,7 @@ export default function StrukPage({ params }: { params: { kode: string } }) {
       : `https://wa.me/?text=${encodeURIComponent(message)}`;
 
     if (!nomorHp && typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(message).catch(() => {});
+      navigator.clipboard.writeText(message).catch(() => { });
       alert('Nomor WhatsApp pelanggan tidak tersedia. Pesan struk telah disalin ke clipboard.');
     }
 
@@ -154,7 +154,7 @@ export default function StrukPage({ params }: { params: { kode: string } }) {
     <div className="min-h-screen bg-gray-100 py-4 sm:py-8">
       <div className="container mx-auto px-3 sm:px-4 max-w-2xl">
         <div className="no-print mb-4 sm:mb-6 flex flex-col sm:flex-row gap-2 sm:gap-3">
-          <Button variant="ghost" onClick={() => router.push('/')} className="w-full sm:w-auto h-11 sm:h-10">
+          <Button variant="ghost" onClick={() => router.push('/dashboard')} className="w-full sm:w-auto h-11 sm:h-10">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Kembali
           </Button>

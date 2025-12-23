@@ -21,7 +21,7 @@ export default function LoginPage() {
   // Redirect if already logged in
   useEffect(() => {
     if (!authLoading && user) {
-      router.push('/');
+      router.push('/dashboard');
     }
   }, [user, authLoading, router]);
 
@@ -41,7 +41,7 @@ export default function LoginPage() {
         }
       } else {
         toast.success('Login berhasil!');
-        router.push('/');
+        router.push('/dashboard');
         router.refresh();
       }
     } catch (err) {
