@@ -25,8 +25,8 @@ function SuccessContent() {
     return (
         <Card className="w-full shadow-xl text-center">
             <CardHeader>
-                <div className="mx-auto bg-green-100 p-4 rounded-full w-fit mb-4">
-                    <CheckCircle2 className="h-12 w-12 text-green-600" />
+                <div className="mx-auto bg-green-600 p-4 rounded-full w-fit mb-4">
+                    <CheckCircle2 className="h-12 w-12 text-white" />
                 </div>
                 <CardTitle className="text-2xl font-bold text-green-600">Pemesanan Berhasil!</CardTitle>
             </CardHeader>

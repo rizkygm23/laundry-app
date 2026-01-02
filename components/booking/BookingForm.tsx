@@ -232,9 +232,7 @@ export default function BookingForm({ layananList, preSelectedLayananId }: Booki
     return (
         <Card className="shadow-xl boundary-card">
             <CardHeader className="text-center">
-                <div className="mx-auto bg-blue-100 p-3 rounded-full w-fit mb-4">
-                    <Shirt className="h-8 w-8 text-blue-600" />
-                </div>
+
                 <CardTitle className="text-2xl font-bold">Form Pemesanan Online</CardTitle>
                 <CardDescription>
                     Isi data diri Anda untuk pemesanan layanan antar-jemput
@@ -305,7 +303,10 @@ export default function BookingForm({ layananList, preSelectedLayananId }: Booki
 
                     <div className="space-y-4">
                         <div className="space-y-2">
-                            <Label>Pin Lokasi Penjemputan</Label>
+                            <div className="flex items-center gap-2 mb-2">
+                                <MapPin className="h-4 w-4 text-blue-600" />
+                                <Label className="text-base font-semibold text-gray-700">Pin Lokasi Penjemputan</Label>
+                            </div>
                             <LocationPicker
                                 onLocationSelect={(lat, lng) => setSelectedLocation({ lat, lng })}
                                 selectedLocation={selectedLocation}

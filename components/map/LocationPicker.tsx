@@ -29,7 +29,7 @@ export default function LocationPicker({ onLocationSelect, selectedLocation, out
         [outletLocation]);
 
     return (
-        <div className="h-[300px] w-full rounded-lg overflow-hidden border border-gray-300 relative z-0">
+        <div className="h-[400px] w-full rounded-xl overflow-hidden border border-gray-200 shadow-md hover:shadow-lg transition-shadow duration-300 relative z-0">
             <LeafletMap
                 center={selectedLatLng || defaultCenter}
                 zoom={13}

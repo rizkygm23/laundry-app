@@ -294,7 +294,10 @@ export default function CreateTransaksi() {
         }
       }
 
-      const transaksiPayload = orderItems.map((item) => {
+      let remainingDiscount = discountFromPoints;
+
+      // First pass: Create base payload
+      const initialPayload = orderItems.map((item) => {
         const layanan = item.layanan!;
         const jumlah = parseInt(item.jumlah, 10);
         const total = layanan.harga * jumlah;
@@ -311,33 +314,34 @@ export default function CreateTransaksi() {
           alamat_pelanggan: formData.alamat,
           jumlah,
           harga_layanan: layanan.harga,
-          total,
+          total, // Base total, will be adjusted
           status_transaksi: 'antrian',
           status_pembayaran: 'belum_lunas',
           deadline: deadline.toISOString(),
-          poin_earned: 0, // Will be updated upon payment
-          poin_used: item === orderItems[0] ? discountFromPoints : 0, // Attach used points to first item or split? Simplified to first item or handled at transaction level if schema supported it. 
-          // Actually schema has poin_used on transaksi, so we should split or put on one.
-          // Let's put it on the first item for now or better, distribute it. 
-          // Simplified: The total transaction row structure in this app seems to be 1 row per item?
-          // Looking at the insert payload, it IS creating multiple rows (one per item).
-          // This makes "transaction level" fields tricky. 
-          // We will assign poin_used to the first item only to avoid double counting.
+          poin_earned: 0,
+          poin_used: 0, // Will be updated
+          original_total: total, // Helper for calculation
         };
       });
 
-      // Correct poin_used and poin_earned distribution
-      // Ideally we should have a parent 'transaksi_header' table, but based on the schema, 'transaksi' IS the line item?
-      // Wait, let's check the schema again. 
-      // Table transaksi: kode_struk, total, jumlah...
-      // It seems normalized as "one row per service item" but they share kode_struk.
-      // So if we add poin_used, we should probably add it to ONE of the rows or change the schema.
-      // For now, I will add it to the first row only.
+      // Second pass: Distribute discount
+      const transaksiPayload = initialPayload.map((item) => {
+        if (remainingDiscount > 0) {
+          // Deduct from this item, up to its total value
+          const deduction = Math.min(item.original_total, remainingDiscount);
+          remainingDiscount -= deduction;
 
-      if (transaksiPayload.length > 0) {
-        transaksiPayload[0].poin_used = discountFromPoints;
-        // We set poin_earned to 0 initially. It should be calculated and updated when payment is Lunas.
-      }
+          return {
+            ...item,
+            total: item.original_total - deduction,
+            poin_used: deduction,
+          };
+        }
+        return item;
+      });
+
+      // Remove helper property
+      transaksiPayload.forEach((item: any) => delete item.original_total);
 
 
       const { data: insertedData, error } = await supabase

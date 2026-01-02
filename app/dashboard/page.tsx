@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus } from 'lucide-react';
+import { Plus, Truck } from 'lucide-react';
 import Link from 'next/link';
 import TransaksiList from '@/components/transaksi/transaksi-list';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
@@ -36,12 +36,20 @@ export default function DashboardPage() {
                         <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Operasional Pesanan</h1>
                         <p className="text-gray-600 mt-1 text-xs sm:text-sm">Pantau dan kelola pesanan aktif</p>
                     </div>
-                    <Link href="/transaksi/create">
-                        <Button className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto">
-                            <Plus className="mr-2 h-4 w-4" />
-                            Pesanan Baru
-                        </Button>
-                    </Link>
+                    <div className="flex gap-2 w-full sm:w-auto">
+                        <Link href="/delivery" className="flex-1 sm:flex-none">
+                            <Button variant="outline" className="w-full border-blue-600 text-blue-600 hover:bg-blue-50">
+                                <Truck className="mr-2 h-4 w-4" />
+                                Pesanan Online
+                            </Button>
+                        </Link>
+                        <Link href="/transaksi/create" className="flex-1 sm:flex-none">
+                            <Button className="bg-blue-600 hover:bg-blue-700 text-white w-full">
+                                <Plus className="mr-2 h-4 w-4" />
+                                Pesanan Baru
+                            </Button>
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Transactions List */}

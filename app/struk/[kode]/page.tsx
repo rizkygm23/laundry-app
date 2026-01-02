@@ -38,9 +38,33 @@ export default function StrukPage({ params }: { params: { kode: string } }) {
     alamat: string | null;
   } | null>(null);
 
+  const [outletInfo, setOutletInfo] = useState<{
+    address: string | null;
+  } | null>(null);
+
   useEffect(() => {
     loadTransaksi();
+    fetchOutletSettings();
   }, [params.kode]);
+
+  const fetchOutletSettings = async () => {
+    const { data, error } = await supabase
+      .from('outlet_settings')
+      .select('address')
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Gagal memuat info outlet:', error);
+      return;
+    }
+
+    if (data) {
+      setOutletInfo({
+        address: data.address,
+      });
+    }
+  };
 
   const loadTransaksi = async () => {
     const { data, error } = await supabase
@@ -178,8 +202,8 @@ export default function StrukPage({ params }: { params: { kode: string } }) {
           <div className="text-center mb-4 sm:mb-6">
             <h1 className="text-2xl sm:text-3xl font-bold text-blue-600 mb-2">LAUNDRY</h1>
             <div className="text-xs sm:text-sm text-gray-600">
-              <p>Jl. Contoh No. 123</p>
-              <p>Telp: 0812-3456-7890</p>
+              <p>{outletInfo?.address || 'Jl. Contoh No. 123'}</p>
+              <p>Telp: 0812-1858-2747</p>
             </div>
           </div>
 

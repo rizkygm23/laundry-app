@@ -44,7 +44,7 @@ interface Pengeluaran {
   created_at: string;
 }
 
-type Timeframe = 'hari_ini' | 'seminggu' | 'sebulan' | 'tahun';
+type Timeframe = 'hari_ini' | 'seminggu' | 'sebulan' | 'tahun' | 'custom';
 
 export default function KeuanganPage() {
   const [transaksiHarian, setTransaksiHarian] = useState<any[]>([]);
@@ -54,6 +54,8 @@ export default function KeuanganPage() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [timeframe, setTimeframe] = useState<Timeframe>('hari_ini');
+  const [customYear, setCustomYear] = useState<number>(new Date().getFullYear());
+  const [customMonth, setCustomMonth] = useState<number>(new Date().getMonth() + 1); // 1-12
   const [editingPengeluaran, setEditingPengeluaran] = useState<Pengeluaran | null>(null);
   const [formData, setFormData] = useState({
     kategori: '',
@@ -77,7 +79,7 @@ export default function KeuanganPage() {
 
   useEffect(() => {
     filterDataByTimeframe();
-  }, [timeframe, allTransaksi, allPengeluaran]);
+  }, [timeframe, customYear, customMonth, allTransaksi, allPengeluaran]);
 
   const loadData = async () => {
     setLoading(true);
@@ -130,6 +132,12 @@ export default function KeuanganPage() {
       case 'tahun':
         start = startOfYear(now);
         end = endOfYear(now);
+        break;
+      case 'custom':
+        // Create date for selected month and year
+        const customDate = new Date(customYear, customMonth - 1, 1);
+        start = startOfMonth(customDate);
+        end = endOfMonth(customDate);
         break;
       default:
         start = startOfDay(now);
@@ -357,14 +365,64 @@ export default function KeuanganPage() {
 
           {/* Timeframe Tabs */}
           <Tabs value={timeframe} onValueChange={(value) => setTimeframe(value as Timeframe)}>
-            <TabsList className="grid grid-cols-4 w-full sm:w-auto">
+            <TabsList className="grid grid-cols-5 w-full sm:w-auto">
               <TabsTrigger value="hari_ini" className="text-xs sm:text-sm">Hari Ini</TabsTrigger>
               <TabsTrigger value="seminggu" className="text-xs sm:text-sm">Seminggu</TabsTrigger>
               <TabsTrigger value="sebulan" className="text-xs sm:text-sm">Sebulan</TabsTrigger>
               <TabsTrigger value="tahun" className="text-xs sm:text-sm">Tahun</TabsTrigger>
+              <TabsTrigger value="custom" className="text-xs sm:text-sm">Custom</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>
+
+        {/* Custom Date Picker */}
+        {timeframe === 'custom' && (
+          <Card className="p-4">
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end">
+              <div className="flex-1 w-full sm:w-auto">
+                <Label htmlFor="customYear" className="text-sm font-medium mb-2 block">Pilih Tahun</Label>
+                <Select value={customYear.toString()} onValueChange={(val) => setCustomYear(parseInt(val))}>
+                  <SelectTrigger id="customYear" className="w-full">
+                    <SelectValue placeholder="Pilih tahun" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 10 }, (_, i) => new Date().getFullYear() - i).map((year) => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex-1 w-full sm:w-auto">
+                <Label htmlFor="customMonth" className="text-sm font-medium mb-2 block">Pilih Bulan</Label>
+                <Select value={customMonth.toString()} onValueChange={(val) => setCustomMonth(parseInt(val))}>
+                  <SelectTrigger id="customMonth" className="w-full">
+                    <SelectValue placeholder="Pilih bulan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">Januari</SelectItem>
+                    <SelectItem value="2">Februari</SelectItem>
+                    <SelectItem value="3">Maret</SelectItem>
+                    <SelectItem value="4">April</SelectItem>
+                    <SelectItem value="5">Mei</SelectItem>
+                    <SelectItem value="6">Juni</SelectItem>
+                    <SelectItem value="7">Juli</SelectItem>
+                    <SelectItem value="8">Agustus</SelectItem>
+                    <SelectItem value="9">September</SelectItem>
+                    <SelectItem value="10">Oktober</SelectItem>
+                    <SelectItem value="11">November</SelectItem>
+                    <SelectItem value="12">Desember</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="text-sm text-gray-600">
+                <p className="font-medium">Periode:</p>
+                <p>{format(new Date(customYear, customMonth - 1, 1), 'MMMM yyyy', { locale: idLocale })}</p>
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* Stats Cards - Compact for mobile */}
         <div className="grid gap-2 sm:gap-4 grid-cols-2 lg:grid-cols-4">
@@ -400,7 +458,11 @@ export default function KeuanganPage() {
 
           <Card className="p-3 sm:p-4">
             <CardTitle className="text-xs sm:text-sm font-medium text-gray-600 mb-2">
-              {timeframe === 'hari_ini' ? 'Hari Ini' : timeframe === 'seminggu' ? 'Minggu Ini' : timeframe === 'sebulan' ? 'Bulan Ini' : 'Tahun Ini'}
+              {timeframe === 'hari_ini' ? 'Hari Ini' :
+                timeframe === 'seminggu' ? 'Minggu Ini' :
+                  timeframe === 'sebulan' ? 'Bulan Ini' :
+                    timeframe === 'tahun' ? 'Tahun Ini' :
+                      format(new Date(customYear, customMonth - 1, 1), 'MMM yyyy', { locale: idLocale })}
             </CardTitle>
             <div className="space-y-1">
               <p className="text-xs sm:text-sm text-gray-600">
