@@ -161,11 +161,7 @@ export default function LandingPage() {
                   Jadwalkan Penjemputan
                 </Button>
               </Link>
-              <Link href="https://wa.me/6281218582747" target="_blank">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto bg-white text-blue-600 hover:bg-blue-50 border-0 text-lg px-8 py-6 rounded-full font-bold">
-                  Hubungi 0812-1858-2747
-                </Button>
-              </Link>
+
             </div>
           </div>
         </div>
