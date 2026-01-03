@@ -200,7 +200,7 @@ export default function StrukPage({ params }: { params: { kode: string } }) {
 
         <Card ref={strukRef} className="p-4 sm:p-8 bg-white print:shadow-none">
           <div className="text-center mb-4 sm:mb-6">
-            <h1 className="text-2xl sm:text-3xl font-bold text-blue-600 mb-2">LAUNDRY</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-blue-600 mb-2">NECIS LAUNDRY</h1>
             <div className="text-xs sm:text-sm text-gray-600">
               <p>{outletInfo?.address || 'Jl. Contoh No. 123'}</p>
               <p>Telp: 0812-1858-2747</p>
