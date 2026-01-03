@@ -33,7 +33,7 @@ const steps = [
 
 export default function StatusPage({ params }: { params: { kode: string } }) {
   const router = useRouter();
-  const [transaksi, setTransaksi] = useState<Transaksi | null>(null);
+  const [transaksiList, setTransaksiList] = useState<Transaksi[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -51,14 +51,14 @@ export default function StatusPage({ params }: { params: { kode: string } }) {
       const { data, error } = await supabase
         .from('transaksi')
         .select('*')
-        .eq('kode_struk', kode)
-        .single();
+        .eq('kode_struk', kode);
 
       if (error) throw error;
-      if (!data) throw new Error('Data tidak ditemukan');
+      if (!data || data.length === 0) throw new Error('Data tidak ditemukan');
 
-      setTransaksi(data);
+      setTransaksiList(data);
     } catch (err) {
+      console.error(err);
       setError('Pesanan tidak ditemukan. Mohon cek kembali kode Anda.');
     } finally {
       setLoading(false);
@@ -66,16 +66,22 @@ export default function StatusPage({ params }: { params: { kode: string } }) {
   };
 
   const getStepStatus = (stepId: string) => {
-    if (!transaksi) return 'inactive';
+    if (!transaksiList || transaksiList.length === 0) return 'inactive';
+    // Gunakan status dari item pertama (asumsi semua item dalam satu struk punya status sama)
+    const currentStatus = transaksiList[0].status_transaksi;
 
     const statusOrder = ['penjemputan', 'antrian', 'proses', 'selesai', 'terkirim'];
-    const currentIdx = statusOrder.indexOf(transaksi.status_transaksi);
+    const currentIdx = statusOrder.indexOf(currentStatus);
     const stepIdx = statusOrder.indexOf(stepId);
 
     if (currentIdx === stepIdx) return 'current';
     if (currentIdx > stepIdx) return 'completed';
     return 'inactive';
   };
+
+  // Helper variables derived from the list
+  const mainTransaksi = transaksiList ? transaksiList[0] : null;
+  const totalPembayaran = transaksiList ? transaksiList.reduce((acc, curr) => acc + curr.total, 0) : 0;
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6">
@@ -95,10 +101,6 @@ export default function StatusPage({ params }: { params: { kode: string } }) {
             placeholder="Masukkan Kode Pesanan (Contoh: OL2312230001)"
             defaultValue={params.kode}
             className="flex-1"
-            onChange={(e) => {
-              // Optional: Live search or wait for enter?
-              // For now, simpler to rely on URL params or a hard refresh/navigation
-            }}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 router.push(`/status/${e.currentTarget.value}`);
@@ -117,18 +119,18 @@ export default function StatusPage({ params }: { params: { kode: string } }) {
           <div className="text-center py-12">Checking status...</div>
         ) : error ? (
           <div className="text-center py-12 text-red-600 bg-red-50 rounded-lg">{error}</div>
-        ) : transaksi ? (
+        ) : mainTransaksi && transaksiList ? (
           <Card className="shadow-lg border-t-4 border-t-blue-600">
             <CardHeader className="bg-gray-50/50 border-b">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                  <CardTitle className="text-2xl font-bold text-blue-900">{transaksi.kode_struk}</CardTitle>
+                  <CardTitle className="text-2xl font-bold text-blue-900">{mainTransaksi.kode_struk}</CardTitle>
                   <CardDescription>
-                    Pelanggan: {transaksi.nama_pelanggan}
+                    Pelanggan: {mainTransaksi.nama_pelanggan}
                   </CardDescription>
                 </div>
-                <Badge className="text-lg px-4 py-1" variant={transaksi.status_pembayaran === 'lunas' ? 'default' : 'destructive'}>
-                  {transaksi.status_pembayaran === 'lunas' ? 'LUNAS' : 'BELUM BAYAR'}
+                <Badge className="text-lg px-4 py-1" variant={mainTransaksi.status_pembayaran === 'lunas' ? 'default' : 'destructive'}>
+                  {mainTransaksi.status_pembayaran === 'lunas' ? 'LUNAS' : 'BELUM BAYAR'}
                 </Badge>
               </div>
             </CardHeader>
@@ -163,18 +165,27 @@ export default function StatusPage({ params }: { params: { kode: string } }) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-3">Detail Layanan</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between border-b pb-2">
-                      <span className="text-gray-500">Layanan</span>
-                      <span className="font-medium">{transaksi.nama_layanan}</span>
-                    </div>
-                    <div className="flex justify-between border-b pb-2">
-                      <span className="text-gray-500">Jumlah</span>
-                      <span className="font-medium">{transaksi.jumlah}</span>
-                    </div>
-                    <div className="flex justify-between pt-2">
+                  <div className="space-y-4">
+                    {transaksiList.map((item) => (
+                      <div key={item.id} className="border-b pb-2 last:border-0 last:pb-0">
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Layanan</span>
+                          <span className="font-medium">{item.nama_layanan}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-500">Jumlah</span>
+                          <span className="font-medium">{item.jumlah}</span>
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-400 mt-1">
+                          <span>Subtotal</span>
+                          <span>Rp {item.total.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    ))}
+
+                    <div className="flex justify-between pt-4 border-t border-gray-200">
                       <span className="text-gray-500 font-semibold">Total Estimasi</span>
-                      <span className="font-bold text-lg text-blue-600">Rp {transaksi.total.toLocaleString()}</span>
+                      <span className="font-bold text-lg text-blue-600">Rp {totalPembayaran.toLocaleString()}</span>
                     </div>
                   </div>
                 </div>
@@ -184,11 +195,11 @@ export default function StatusPage({ params }: { params: { kode: string } }) {
                   <div className="space-y-2">
                     <div className="flex justify-between border-b pb-2">
                       <span className="text-gray-500">Dipesan</span>
-                      <span className="font-medium">{new Date(transaksi.created_at).toLocaleDateString('id-ID')}</span>
+                      <span className="font-medium">{new Date(mainTransaksi.created_at).toLocaleDateString('id-ID')}</span>
                     </div>
                     <div className="flex justify-between border-b pb-2">
                       <span className="text-gray-500">Estimasi Selesai</span>
-                      <span className="font-medium">{new Date(transaksi.deadline).toLocaleDateString('id-ID')}</span>
+                      <span className="font-medium">{new Date(mainTransaksi.deadline).toLocaleDateString('id-ID')}</span>
                     </div>
                   </div>
                 </div>
