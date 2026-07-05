@@ -24,23 +24,12 @@ jobs:
       - name: Install dependencies
         run: npm ci || npm install
 
-      - name: Build Next.js application
-        run: npm run build
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-
       - name: Run Cypress tests E2E
         uses: cypress-io/github-action@v6
         with:
-          start: npm start
-          port: 3000
-          wait-on: 'http://localhost:3000'
           browser: chrome
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          CYPRESS_baseUrl: http://localhost:3000
+          CYPRESS_baseUrl: https://necis.vercel.app
 
       - name: Upload Cypress screenshots on failure
         uses: actions/upload-artifact@v4
