@@ -1,108 +1,144 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import { User, Session } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
+import { AuthUser } from '@/lib/auth';
+import { supabase } from '@/lib/supabase';
 
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
+  user: AuthUser | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, name: string) => Promise<{ error: any; data?: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, name: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    // Check existing session
+    const storedUser = localStorage.getItem('auth_user');
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (err) {
+        console.error('Error parsing stored user:', err);
+        localStorage.removeItem('auth_user');
+      }
+    }
+    setLoading(false);
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
+    try {
+      const emailLower = email.toLowerCase().trim();
+      const { data: userRow, error } = await supabase
+        .from('users_laundry')
+        .select('id, name, email, username, nomor_hp, alamat, password')
+        .eq('email', emailLower)
+        .maybeSingle();
+
+      if (error) {
+        return { error: new Error(error.message) };
+      }
+
+      if (!userRow) {
+        return { error: new Error('Email atau password salah') };
+      }
+
+      if (userRow.password !== password) {
+        return { error: new Error('Email atau password salah') };
+      }
+
+      const userData: AuthUser = {
+        id: userRow.id,
+        email: userRow.email,
+        name: userRow.name,
+        username: userRow.username,
+        nomor_hp: userRow.nomor_hp ?? undefined,
+        alamat: userRow.alamat ?? undefined,
+      };
+
+      setUser(userData);
+      localStorage.setItem('auth_user', JSON.stringify(userData));
+      return { error: null };
+    } catch (err) {
+      return { error: err instanceof Error ? err : new Error('Login gagal') };
+    }
   };
 
   const signUp = async (email: string, password: string, name: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          name: name,
-        },
-        // Email verification disabled - users can login immediately after registration
-        // Make sure to disable "Enable email confirmations" in Supabase Dashboard
-      },
-    });
+    try {
+      const emailLower = email.toLowerCase().trim();
+      const username = emailLower.split('@')[0];
 
-    if (!error && data.user) {
-      try {
-        // Create user profile in users table
-        // Note: Password field is not needed when using Supabase Auth
-        const { error: profileError } = await supabase.from('users').insert([
+      // Check if email already exists
+      const { data: existingUser, error: checkError } = await supabase
+        .from('users_laundry')
+        .select('id')
+        .eq('email', emailLower)
+        .maybeSingle();
+
+      if (checkError) {
+        return { error: new Error(checkError.message) };
+      }
+
+      if (existingUser) {
+        return { error: new Error('Email sudah terdaftar') };
+      }
+
+      // Insert new user
+      const { data: newUser, error: insertError } = await supabase
+        .from('users_laundry')
+        .insert([
           {
-            id: data.user.id,
-            email: email,
-            name: name,
-            username: email.split('@')[0], // Use email prefix as username
-            password: '', // Not used when using Supabase Auth
+            name: name.trim(),
+            email: emailLower,
+            username,
+            password: password, // plain text
           },
-        ]);
+        ])
+        .select('id, name, email, username, nomor_hp, alamat')
+        .single();
 
-        if (profileError) {
-          console.error('Error creating user profile:', profileError);
-          // Don't fail registration if profile creation fails
-        }
-      } catch (err) {
-        console.error('Error creating user profile:', err);
-        // Don't fail registration if profile creation fails
+      if (insertError || !newUser) {
+        return { error: new Error(insertError?.message || 'Gagal membuat akun') };
       }
 
-      // If session is available (email confirmation disabled), auto-login
-      if (data.session) {
-        setSession(data.session);
-        setUser(data.user);
-      }
+      const userData: AuthUser = {
+        id: newUser.id,
+        email: newUser.email,
+        name: newUser.name,
+        username: newUser.username,
+        nomor_hp: newUser.nomor_hp ?? undefined,
+        alamat: newUser.alamat ?? undefined,
+      };
+
+      setUser(userData);
+      localStorage.setItem('auth_user', JSON.stringify(userData));
+      return { error: null };
+    } catch (err) {
+      return { error: err instanceof Error ? err : new Error('Registrasi gagal') };
     }
-
-    return { error, data };
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    router.push('/login');
+    try {
+      localStorage.removeItem('auth_user');
+      setUser(null);
+      router.push('/login');
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );
@@ -115,4 +151,3 @@ export function useAuth() {
   }
   return context;
 }
-

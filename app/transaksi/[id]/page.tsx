@@ -36,7 +36,7 @@ export default function TransaksiDetailPage({ params }: { params: { id: string }
 
   const loadTransaksi = async () => {
     const { data } = await supabase
-      .from('transaksi')
+      .from('transaksi_laundry')
       .select('*')
       .eq('id', params.id)
       .single();

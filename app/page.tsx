@@ -55,7 +55,7 @@ export default function LandingPage() {
   const fetchLayanan = async () => {
     try {
       const { data, error } = await supabase
-        .from('layanan')
+        .from('layanan_laundry')
         .select('*')
         .order('harga', { ascending: true }); // Sort by price or name
 

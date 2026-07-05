@@ -43,19 +43,14 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const { error, data } = await signUp(email, password, name);
+      const { error } = await signUp(email, password, name);
 
       if (error) {
         toast.error('Registrasi gagal: ' + error.message);
       } else {
-        // If session is available (email confirmation disabled), auto-login
-        if (data?.session) {
-          toast.success('Registrasi berhasil! Anda sudah login.');
-          router.push('/dashboard');
-        } else {
-          toast.success('Registrasi berhasil! Silakan login.');
-          router.push('/login');
-        }
+        toast.success('Registrasi berhasil! Anda sudah login.');
+        router.push('/dashboard');
+        router.refresh();
       }
     } catch (err) {
       toast.error('Terjadi kesalahan: ' + (err instanceof Error ? err.message : 'Unknown error'));

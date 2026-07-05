@@ -99,7 +99,7 @@ export default function TransaksiList({
   const loadTransaksi = useCallback(async () => {
     setLoading(true);
     try {
-      let query = supabase.from('transaksi').select('*');
+      let query = supabase.from('transaksi_laundry').select('*');
 
       if (searchQuery) {
         query = query.or(
@@ -155,7 +155,7 @@ export default function TransaksiList({
   const updateStatus = async (id: string, status: string) => {
     try {
       const { error } = await supabase
-        .from('transaksi')
+        .from('transaksi_laundry')
         .update({ status_transaksi: status })
         .eq('id', id);
 
@@ -167,7 +167,7 @@ export default function TransaksiList({
 
       // Check if transaction is completed and paid, then close modal
       const { data: updatedData } = await supabase
-        .from('transaksi')
+        .from('transaksi_laundry')
         .select('status_transaksi, status_pembayaran')
         .eq('id', id)
         .single();
@@ -202,7 +202,7 @@ export default function TransaksiList({
     // For other status updates, use the old method
     try {
       const { error } = await supabase
-        .from('transaksi')
+        .from('transaksi_laundry')
         .update({ status_pembayaran: status })
         .eq('id', id);
 
@@ -230,7 +230,7 @@ export default function TransaksiList({
       try {
         // 1. Get full transaction details to ensure we have customer ID and total
         const { data: trx } = await supabase
-          .from('transaksi')
+          .from('transaksi_laundry')
           .select('*')
           .eq('id', selectedTransaksiForPayment.id)
           .single();
@@ -242,7 +242,7 @@ export default function TransaksiList({
           // checking poin_earned > 0 might prevent double counting, but let's assume valid flow.
 
           // Fetch customer
-          const { data: cust } = await supabase.from('pelanggan').select('id, poin, membership_level').eq('id', trx.id_pelanggan).single();
+          const { data: cust } = await supabase.from('pelanggan_laundry').select('id, poin, membership_level').eq('id', trx.id_pelanggan).single();
 
           if (cust) {
             const currentLevel = cust.membership_level || 'Bronze';
@@ -267,7 +267,7 @@ export default function TransaksiList({
               const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
               const { data: transData } = await supabase
-                .from('transaksi')
+                .from('transaksi_laundry')
                 .select('total')
                 .eq('id_pelanggan', cust.id)
                 .gte('created_at', firstDay)
@@ -281,13 +281,13 @@ export default function TransaksiList({
               else if (currentMonthTotal >= 200000) newLevel = 'Silver';
 
               // Update customer
-              await supabase.from('pelanggan').update({
+              await supabase.from('pelanggan_laundry').update({
                 poin: newPoinBalance,
                 membership_level: newLevel
               }).eq('id', cust.id);
 
               // Update transaction with earned points
-              await supabase.from('transaksi').update({ poin_earned: earned }).eq('id', trx.id);
+              await supabase.from('transaksi_laundry').update({ poin_earned: earned }).eq('id', trx.id);
 
               console.log(`Points added: ${earned}, New Level: ${newLevel}`);
             }
@@ -296,7 +296,7 @@ export default function TransaksiList({
 
         // Close modal if fully completed
         const { data: updatedData } = await supabase
-          .from('transaksi')
+          .from('transaksi_laundry')
           .select('status_transaksi, status_pembayaran')
           .eq('id', selectedTransaksiForPayment.id)
           .single();
@@ -316,7 +316,7 @@ export default function TransaksiList({
 
     try {
       const { error } = await supabase
-        .from('transaksi')
+        .from('transaksi_laundry')
         .delete()
         .eq('id', id);
 

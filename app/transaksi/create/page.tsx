@@ -85,7 +85,7 @@ export default function CreateTransaksi() {
 
       try {
         const { data, error } = await supabase
-          .from('pelanggan')
+          .from('pelanggan_laundry')
           .select('nama, alamat, poin, membership_level')
           .eq('nomor_hp', nomorHp)
           .maybeSingle();
@@ -144,7 +144,7 @@ export default function CreateTransaksi() {
 
   const loadLayanan = async () => {
     const { data } = await supabase
-      .from('layanan')
+      .from('layanan_laundry')
       .select('*')
       .order('nama');
 
@@ -238,7 +238,7 @@ export default function CreateTransaksi() {
       let pelangganId: string | null = null;
 
       const { data: existingPelanggan, error: errorPelangganCek } = await supabase
-        .from('pelanggan')
+        .from('pelanggan_laundry')
         .select('id, nama, alamat')
         .eq('nomor_hp', nomorHp)
         .maybeSingle();
@@ -257,7 +257,7 @@ export default function CreateTransaksi() {
           (existingPelanggan.alamat || '') !== formData.alamat
         ) {
           const { error: errorUpdatePelanggan } = await supabase
-            .from('pelanggan')
+            .from('pelanggan_laundry')
             .update({
               nama: formData.nama_pelanggan,
               alamat: formData.alamat,
@@ -272,7 +272,7 @@ export default function CreateTransaksi() {
         }
       } else {
         const { data: newPelanggan, error: errorInsertPelanggan } = await supabase
-          .from('pelanggan')
+          .from('pelanggan_laundry')
           .insert([
             {
               nama: formData.nama_pelanggan,
@@ -345,7 +345,7 @@ export default function CreateTransaksi() {
 
 
       const { data: insertedData, error } = await supabase
-        .from('transaksi')
+        .from('transaksi_laundry')
         .insert(transaksiPayload)
         .select('id');
 
@@ -387,7 +387,7 @@ export default function CreateTransaksi() {
 
     // 1. Update status_pembayaran to 'lunas'
     const { error: updateError } = await supabase
-      .from('transaksi')
+      .from('transaksi_laundry')
       .update({ status_pembayaran: 'lunas' })
       .eq('kode_struk', kodeStrukForPayment);
 
@@ -405,7 +405,7 @@ export default function CreateTransaksi() {
 
     if (formData.nomor_hp) {
       // Get customer id
-      const { data: cust } = await supabase.from('pelanggan').select('id, poin, membership_level').eq('nomor_hp', formData.nomor_hp).single();
+      const { data: cust } = await supabase.from('pelanggan_laundry').select('id, poin, membership_level').eq('nomor_hp', formData.nomor_hp).single();
 
       if (cust) {
         const earned = potentialPoints; // This assumes potentialPoints didn't change (it shouldn't)
@@ -417,7 +417,7 @@ export default function CreateTransaksi() {
         const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
         const { data: transData } = await supabase
-          .from('transaksi')
+          .from('transaksi_laundry')
           .select('total')
           .eq('id_pelanggan', cust.id)
           .gte('created_at', firstDay)
@@ -431,7 +431,7 @@ export default function CreateTransaksi() {
         else if (currentMonthTotal >= 200000) newLevel = 'Silver';
 
         // Update customer
-        await supabase.from('pelanggan').update({
+        await supabase.from('pelanggan_laundry').update({
           poin: newPoinBalance,
           membership_level: newLevel
         }).eq('id', cust.id);
@@ -441,7 +441,7 @@ export default function CreateTransaksi() {
         // Let's update the first one we find with this kode_struk or all of them with 0 and one with value?
         // Simplest: update all rows with 0 and the first with the value.
         // Actually, let's just leave it for now or try to update.
-        await supabase.from('transaksi')
+        await supabase.from('transaksi_laundry')
           .update({ poin_earned: earned })
           .eq('kode_struk', kodeStrukForPayment)
           .eq('id_pelanggan', cust.id) // safety
@@ -449,7 +449,7 @@ export default function CreateTransaksi() {
         // Better: Update using ID of the first transaction of this struk.
         // We have createdTransaksiId (which is the first one).
         if (createdTransaksiId) {
-          await supabase.from('transaksi').update({ poin_earned: earned }).eq('id', createdTransaksiId);
+          await supabase.from('transaksi_laundry').update({ poin_earned: earned }).eq('id', createdTransaksiId);
         }
       }
     }

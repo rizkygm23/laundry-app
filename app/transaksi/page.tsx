@@ -30,7 +30,7 @@ export default function TransaksiPage() {
   }, []);
 
   const loadStats = async () => {
-    const { data, error } = await supabase.from('transaksi').select('status_transaksi');
+    const { data, error } = await supabase.from('transaksi_laundry').select('status_transaksi');
 
     if (error) {
       console.error('Gagal memuat ringkasan transaksi:', error);

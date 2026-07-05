@@ -55,7 +55,7 @@ export default function LayananList() {
 
   const loadLayanan = async () => {
     const { data } = await supabase
-      .from('layanan')
+      .from('layanan_laundry')
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -77,10 +77,10 @@ export default function LayananList() {
 
       let error;
       if (editingId) {
-        const result = await supabase.from('layanan').update(layananData).eq('id', editingId);
+        const result = await supabase.from('layanan_laundry').update(layananData).eq('id', editingId);
         error = result.error;
       } else {
-        const result = await supabase.from('layanan').insert([layananData]);
+        const result = await supabase.from('layanan_laundry').insert([layananData]);
         error = result.error;
       }
 
@@ -113,7 +113,7 @@ export default function LayananList() {
   const handleDelete = async (id: string) => {
     if (confirm('Apakah Anda yakin ingin menghapus layanan ini?')) {
       try {
-        const { error } = await supabase.from('layanan').delete().eq('id', id);
+        const { error } = await supabase.from('layanan_laundry').delete().eq('id', id);
         if (error) {
           console.error('Error deleting layanan:', error);
           alert('Gagal menghapus layanan: ' + error.message);

@@ -54,7 +54,7 @@ export default function DeliveryPage() {
             const status = activeTab === 'penjemputan' ? 'penjemputan' : 'selesai';
 
             let query = supabase
-                .from('transaksi')
+                .from('transaksi_laundry')
                 .select('*')
                 .eq('status_transaksi', status)
                 .order('created_at', { ascending: true });
@@ -80,7 +80,7 @@ export default function DeliveryPage() {
         setSelectedTask(task);
         // Fetch phone number from pelanggan table
         if (task.id_pelanggan) {
-            const { data } = await supabase.from('pelanggan').select('nomor_hp').eq('id', task.id_pelanggan).single();
+            const { data } = await supabase.from('pelanggan_laundry').select('nomor_hp').eq('id', task.id_pelanggan).single();
             if (data) setCustomerPhone(data.nomor_hp);
             else setCustomerPhone(null);
         } else {
@@ -105,7 +105,7 @@ export default function DeliveryPage() {
         if (!selectedTask) return;
         try {
             const { error } = await supabase
-                .from('transaksi')
+                .from('transaksi_laundry')
                 .update({ status_transaksi: newStatus })
                 .eq('id', selectedTask.id);
 

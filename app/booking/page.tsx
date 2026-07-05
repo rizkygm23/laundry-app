@@ -43,7 +43,7 @@ function BookingForm() {
     }, []);
 
     const loadLayanan = async () => {
-        const { data } = await supabase.from('layanan').select('*').order('nama');
+        const { data } = await supabase.from('layanan_laundry').select('*').order('nama');
         if (data) setLayananList(data);
     };
 
@@ -54,7 +54,7 @@ function BookingForm() {
             if (hp.length < 10) return;
 
             const { data } = await supabase
-                .from('pelanggan')
+                .from('pelanggan_laundry')
                 .select('nama, alamat')
                 .eq('nomor_hp', hp)
                 .maybeSingle();
@@ -84,7 +84,7 @@ function BookingForm() {
             // 1. Handle Customer (Find or Create)
             let pelangganId;
             const { data: existingCust } = await supabase
-                .from('pelanggan')
+                .from('pelanggan_laundry')
                 .select('id')
                 .eq('nomor_hp', formData.nomor_hp)
                 .maybeSingle();
@@ -94,11 +94,11 @@ function BookingForm() {
                 // Optional: Update address if changed? Let's just keep existing or maybe update.
                 // For simplicity in booking, we assume we update address if provided
                 if (formData.alamat) {
-                    await supabase.from('pelanggan').update({ alamat: formData.alamat }).eq('id', pelangganId);
+                    await supabase.from('pelanggan_laundry').update({ alamat: formData.alamat }).eq('id', pelangganId);
                 }
             } else {
                 const { data: newCust, error: createError } = await supabase
-                    .from('pelanggan')
+                    .from('pelanggan_laundry')
                     .insert([{
                         nama: formData.nama_pelanggan,
                         nomor_hp: formData.nomor_hp,
@@ -133,7 +133,7 @@ function BookingForm() {
             const deadline = new Date();
             deadline.setDate(deadline.getDate() + 1); // Default 1 day deadline placeholder
 
-            const { error: transError } = await supabase.from('transaksi').insert([{
+            const { error: transError } = await supabase.from('transaksi_laundry').insert([{
                 kode_struk: kodeStruk,
                 id_pelanggan: pelangganId,
                 id_layanan: selectedLayanan.id,

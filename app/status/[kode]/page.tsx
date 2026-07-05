@@ -49,7 +49,7 @@ export default function StatusPage({ params }: { params: { kode: string } }) {
 
     try {
       const { data, error } = await supabase
-        .from('transaksi')
+        .from('transaksi_laundry')
         .select('*')
         .eq('kode_struk', kode);
 

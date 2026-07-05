@@ -49,7 +49,7 @@ export default function StrukPage({ params }: { params: { kode: string } }) {
 
   const fetchOutletSettings = async () => {
     const { data, error } = await supabase
-      .from('outlet_settings')
+      .from('outlet_settings_laundry')
       .select('address')
       .limit(1)
       .maybeSingle();
@@ -68,7 +68,7 @@ export default function StrukPage({ params }: { params: { kode: string } }) {
 
   const loadTransaksi = async () => {
     const { data, error } = await supabase
-      .from('transaksi')
+      .from('transaksi_laundry')
       .select('*')
       .eq('kode_struk', params.kode)
       .order('created_at', { ascending: true });
@@ -96,7 +96,7 @@ export default function StrukPage({ params }: { params: { kode: string } }) {
 
   const fetchPelanggan = async (pelangganId: string) => {
     const { data, error } = await supabase
-      .from('pelanggan')
+      .from('pelanggan_laundry')
       .select('nama, nomor_hp, alamat')
       .eq('id', pelangganId)
       .maybeSingle();

@@ -23,7 +23,7 @@ export default function SettingsPage() {
     const loadSettings = async () => {
         try {
             const { data, error } = await supabase
-                .from('outlet_settings')
+                .from('outlet_settings_laundry')
                 .select('*')
                 .maybeSingle();
 
@@ -49,11 +49,11 @@ export default function SettingsPage() {
         setSaving(true);
         try {
             // Check if exists
-            const { data: existing } = await supabase.from('outlet_settings').select('id').maybeSingle();
+            const { data: existing } = await supabase.from('outlet_settings_laundry').select('id').maybeSingle();
 
             if (existing) {
                 const { error } = await supabase
-                    .from('outlet_settings')
+                    .from('outlet_settings_laundry')
                     .update({
                         latitude: outletLocation.lat,
                         longitude: outletLocation.lng,
@@ -64,7 +64,7 @@ export default function SettingsPage() {
                 if (error) throw error;
             } else {
                 const { error } = await supabase
-                    .from('outlet_settings')
+                    .from('outlet_settings_laundry')
                     .insert([{
                         latitude: outletLocation.lat,
                         longitude: outletLocation.lng,

@@ -45,7 +45,7 @@ export default function PelangganList() {
 
   const loadPelanggan = async () => {
     const { data } = await supabase
-      .from('pelanggan')
+      .from('pelanggan_laundry')
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -60,10 +60,10 @@ export default function PelangganList() {
     try {
       let error;
       if (editingId) {
-        const result = await supabase.from('pelanggan').update(formData).eq('id', editingId);
+        const result = await supabase.from('pelanggan_laundry').update(formData).eq('id', editingId);
         error = result.error;
       } else {
-        const result = await supabase.from('pelanggan').insert([formData]);
+        const result = await supabase.from('pelanggan_laundry').insert([formData]);
         error = result.error;
       }
 
@@ -95,7 +95,7 @@ export default function PelangganList() {
   const handleDelete = async (id: string) => {
     if (confirm('Apakah Anda yakin ingin menghapus pelanggan ini?')) {
       try {
-        const { error } = await supabase.from('pelanggan').delete().eq('id', id);
+        const { error } = await supabase.from('pelanggan_laundry').delete().eq('id', id);
         if (error) {
           console.error('Error deleting pelanggan:', error);
           alert('Gagal menghapus pelanggan: ' + error.message);

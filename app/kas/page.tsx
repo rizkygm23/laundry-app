@@ -86,12 +86,12 @@ export default function KeuanganPage() {
     try {
       const [transaksiResult, pengeluaranResult] = await Promise.all([
         supabase
-          .from('transaksi')
+          .from('transaksi_laundry')
           .select('*')
           .eq('status_pembayaran', 'lunas')
           .order('created_at', { ascending: false }),
         supabase
-          .from('pengeluaran')
+          .from('pengeluaran_laundry')
           .select('*')
           .order('tanggal', { ascending: false }),
       ]);
@@ -285,7 +285,7 @@ export default function KeuanganPage() {
 
       if (editingPengeluaran) {
         const { error } = await supabase
-          .from('pengeluaran')
+          .from('pengeluaran_laundry')
           .update({
             kategori: formData.kategori,
             deskripsi: formData.deskripsi,
@@ -298,7 +298,7 @@ export default function KeuanganPage() {
         toast.success('Pengeluaran berhasil diperbarui');
       } else {
         const { error } = await supabase
-          .from('pengeluaran')
+          .from('pengeluaran_laundry')
           .insert([
             {
               kategori: formData.kategori,
@@ -324,7 +324,7 @@ export default function KeuanganPage() {
     if (!confirm('Apakah Anda yakin ingin menghapus pengeluaran ini?')) return;
 
     try {
-      const { error } = await supabase.from('pengeluaran').delete().eq('id', id);
+      const { error } = await supabase.from('pengeluaran_laundry').delete().eq('id', id);
 
       if (error) throw error;
       toast.success('Pengeluaran berhasil dihapus');

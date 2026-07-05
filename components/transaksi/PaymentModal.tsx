@@ -189,7 +189,7 @@ export function PaymentModal({
 
       // Get kode_struk from transaction
       const { data: transaksiData } = await supabase
-        .from('transaksi')
+        .from('transaksi_laundry')
         .select('kode_struk')
         .eq('id', transaksiId)
         .single();
@@ -214,7 +214,7 @@ export function PaymentModal({
       }
 
       const { error } = await supabase
-        .from('transaksi')
+        .from('transaksi_laundry')
         .update(updateData)
         .eq('kode_struk', transaksiData.kode_struk)
         .eq('status_pembayaran', 'belum_lunas');

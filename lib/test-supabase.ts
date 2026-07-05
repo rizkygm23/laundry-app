@@ -16,7 +16,7 @@ export async function testSupabaseConnection() {
     // Test query ke tabel layanan
     console.log('\n📊 Testing table: layanan');
     const { data: layanan, error: errorLayanan } = await supabase
-      .from('layanan')
+      .from('layanan_laundry')
       .select('id')
       .limit(1);
 
@@ -29,7 +29,7 @@ export async function testSupabaseConnection() {
     // Test query ke tabel pelanggan
     console.log('\n📊 Testing table: pelanggan');
     const { data: pelanggan, error: errorPelanggan } = await supabase
-      .from('pelanggan')
+      .from('pelanggan_laundry')
       .select('id')
       .limit(1);
 
@@ -42,7 +42,7 @@ export async function testSupabaseConnection() {
     // Test query ke tabel transaksi
     console.log('\n📊 Testing table: transaksi');
     const { data: transaksi, error: errorTransaksi } = await supabase
-      .from('transaksi')
+      .from('transaksi_laundry')
       .select('id')
       .limit(1);
 
