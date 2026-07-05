@@ -73,6 +73,10 @@ describe("Remaining Routes & Extra Features E2E Tests", () => {
     cy.contains("Total Pengeluaran").should("be.visible");
     cy.contains("Saldo Kas").should("be.visible");
 
+    // Switch timeframe filter to "Sebulan" to make it robust against daily/timezone boundaries
+    cy.contains("Sebulan").click({ force: true });
+    cy.wait(500);
+
     // Add expense
     cy.contains("Tambah").click({ force: true });
     
@@ -80,7 +84,8 @@ describe("Remaining Routes & Extra Features E2E Tests", () => {
     cy.contains("Pilih kategori").click({ force: true });
     cy.get('[role="option"]').contains("Bahan Baku").click({ force: true });
     
-    const expenseDesc = `E2E Expense Detergent ${Date.now()}`;
+    // Use a very short description to prevent truncation by "truncate max-w-[150px]"
+    const expenseDesc = `E2E-${Date.now().toString().slice(-6)}`;
     cy.get('input[placeholder="Masukkan deskripsi pengeluaran"]').type(expenseDesc);
     cy.get('input[placeholder="0"]').type("45000");
 
@@ -93,7 +98,7 @@ describe("Remaining Routes & Extra Features E2E Tests", () => {
 
     // Edit expense
     cy.get("table").contains(expenseDesc).parents("tr").find("button").first().click({ force: true });
-    const updatedDesc = `${expenseDesc} Edited`;
+    const updatedDesc = `${expenseDesc}-Ed`;
     cy.get('input[placeholder="Masukkan deskripsi pengeluaran"]').clear().type(updatedDesc);
     cy.get('button').contains("Simpan").click({ force: true });
 
@@ -133,8 +138,8 @@ describe("Remaining Routes & Extra Features E2E Tests", () => {
     cy.contains("Ringkasan Transaksi").should("be.visible");
     cy.contains("Semua Transaksi").should("be.visible");
 
-    // Search by name
-    cy.get('input[placeholder="Cari nama atau kode pesanan..."]').type("NonExistentUserSearch");
+    // Search by name and trigger by pressing Enter
+    cy.get('input[placeholder="Cari nama atau kode pesanan..."]').type("NonExistentUserSearch{enter}");
     cy.wait(500);
     cy.contains("Belum ada pesanan").should("be.visible");
   });
