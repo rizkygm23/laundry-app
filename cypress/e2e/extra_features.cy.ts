@@ -77,7 +77,7 @@ describe("Remaining Routes & Extra Features E2E Tests", () => {
     cy.contains("Sebulan").click({ force: true });
     cy.wait(500);
 
-    // Add expense
+    // Add expense (click the trigger button in card header)
     cy.contains("Tambah").click({ force: true });
     
     // Fill form
@@ -89,8 +89,8 @@ describe("Remaining Routes & Extra Features E2E Tests", () => {
     cy.get('input[placeholder="Masukkan deskripsi pengeluaran"]').type(expenseDesc);
     cy.get('input[placeholder="0"]').type("45000");
 
-    // Click Tambah button in dialog
-    cy.get('button').contains("Tambah").click({ force: true });
+    // Click Tambah button INSIDE the dialog to submit (target specifically using [role="dialog"])
+    cy.get('[role="dialog"]').find('button').contains("Tambah").click({ force: true });
 
     // Verify expense is added to the list (it should show in the table)
     cy.contains(expenseDesc).should("be.visible");
@@ -138,8 +138,9 @@ describe("Remaining Routes & Extra Features E2E Tests", () => {
     cy.contains("Ringkasan Transaksi").should("be.visible");
     cy.contains("Semua Transaksi").should("be.visible");
 
-    // Search by name and trigger by pressing Enter
-    cy.get('input[placeholder="Cari nama atau kode pesanan..."]').type("NonExistentUserSearch{enter}");
+    // Search by name and trigger by clicking the Search button
+    cy.get('input[placeholder="Cari nama atau kode pesanan..."]').type("NonExistentUserSearch");
+    cy.get('button.bg-blue-600').first().click({ force: true });
     cy.wait(500);
     cy.contains("Belum ada pesanan").should("be.visible");
   });
