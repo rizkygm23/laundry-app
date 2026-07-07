@@ -101,6 +101,7 @@ export default function LoginPage() {
             </div>
 
             <Button
+              id="login-submit-btn"
               type="submit"
               className="w-full bg-blue-600 hover:bg-blue-700 text-white"
               disabled={loading}
@@ -118,7 +119,7 @@ export default function LoginPage() {
 
           <div className="mt-4 text-center text-sm text-gray-600">
             Belum punya akun?{' '}
-            <Link href="/register" className="text-blue-600 hover:underline font-medium">
+            <Link id="register-link" href="/register" className="text-blue-600 hover:underline font-medium">
               Daftar sekarang
             </Link>
           </div>

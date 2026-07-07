@@ -81,7 +81,7 @@ export function Sidebar() {
           <div className="p-4 border-t border-gray-200">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="w-full justify-start gap-3 h-auto py-3">
+                <Button id="profile-dropdown-trigger" variant="ghost" className="w-full justify-start gap-3 h-auto py-3">
                   <Avatar className="h-8 w-8">
                     <AvatarFallback className="bg-blue-600 text-white text-sm">
                       {getUserInitials()}
@@ -107,7 +107,7 @@ export function Sidebar() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={signOut} className="cursor-pointer text-red-600">
+                <DropdownMenuItem id="logout-btn" onClick={signOut} className="cursor-pointer text-red-600">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Logout</span>
                 </DropdownMenuItem>

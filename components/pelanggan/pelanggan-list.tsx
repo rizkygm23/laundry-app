@@ -124,7 +124,7 @@ export default function PelangganList() {
         <h2 className="text-lg sm:text-xl font-semibold">Daftar Pelanggan</h2>
         <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
+            <Button id="tambah-pelanggan-btn" className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
               Tambah Pelanggan
             </Button>
@@ -164,10 +164,10 @@ export default function PelangganList() {
                 />
               </div>
               <div className="flex gap-2">
-                <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700">
+                <Button id="pelanggan-submit-btn" type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700">
                   {editingId ? 'Update' : 'Simpan'}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => { setIsOpen(false); resetForm(); }}>
+                <Button id="pelanggan-cancel-btn" type="button" variant="outline" onClick={() => { setIsOpen(false); resetForm(); }}>
                   Batal
                 </Button>
               </div>
@@ -195,6 +195,7 @@ export default function PelangganList() {
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1 sm:gap-2">
                     <Button
+                      id={`edit-pelanggan-${pelanggan.id}`}
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEdit(pelanggan)}
@@ -203,6 +204,7 @@ export default function PelangganList() {
                       <Pencil className="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                     <Button
+                      id={`delete-pelanggan-${pelanggan.id}`}
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(pelanggan.id)}

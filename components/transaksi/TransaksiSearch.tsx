@@ -130,6 +130,7 @@ export function TransaksiSearch({ onSearch, onClear }: TransaksiSearchProps) {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
+              id="transaksi-search-input"
               placeholder="Cari nama atau kode pesanan..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -142,6 +143,7 @@ export function TransaksiSearch({ onSearch, onClear }: TransaksiSearchProps) {
             />
           </div>
           <Button
+            id="transaksi-search-btn"
             onClick={handleSearch}
             className="bg-blue-600 hover:bg-blue-700 text-white"
           >
@@ -149,6 +151,7 @@ export function TransaksiSearch({ onSearch, onClear }: TransaksiSearchProps) {
           </Button>
           {searchQuery && (
             <Button
+              id="transaksi-search-reset-btn"
               variant="outline"
               onClick={handleClear}
               className="flex items-center gap-2"
@@ -159,6 +162,7 @@ export function TransaksiSearch({ onSearch, onClear }: TransaksiSearchProps) {
           )}
         </div>
         <Button
+          id="scan-qr-btn"
           variant="outline"
           onClick={() => setQrScannerOpen(true)}
           className="bg-green-50 hover:bg-green-100 text-green-700 border-green-200 w-full sm:w-auto"

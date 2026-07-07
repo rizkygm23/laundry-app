@@ -143,7 +143,7 @@ export default function LayananList() {
         <h2 className="text-lg sm:text-xl font-semibold">Daftar Layanan</h2>
         <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if (!open) resetForm(); }}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
+            <Button id="tambah-layanan-btn" className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
               Tambah Layanan
             </Button>
@@ -169,7 +169,7 @@ export default function LayananList() {
                   value={formData.jenis_layanan}
                   onValueChange={(value) => setFormData({ ...formData, jenis_layanan: value })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="jenis_layanan-select-trigger">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -201,10 +201,10 @@ export default function LayananList() {
                 />
               </div>
               <div className="flex gap-2">
-                <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700">
+                <Button id="layanan-submit-btn" type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700">
                   {editingId ? 'Update' : 'Simpan'}
                 </Button>
-                <Button type="button" variant="outline" onClick={() => { setIsOpen(false); resetForm(); }}>
+                <Button id="layanan-cancel-btn" type="button" variant="outline" onClick={() => { setIsOpen(false); resetForm(); }}>
                   Batal
                 </Button>
               </div>
@@ -238,6 +238,7 @@ export default function LayananList() {
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1 sm:gap-2">
                     <Button
+                      id={`edit-layanan-${layanan.id}`}
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEdit(layanan)}
@@ -246,6 +247,7 @@ export default function LayananList() {
                       <Pencil className="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                     <Button
+                      id={`delete-layanan-${layanan.id}`}
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDelete(layanan.id)}

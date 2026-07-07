@@ -157,7 +157,7 @@ export default function LandingPage() {
 
             <div className="flex flex-col sm:flex-row gap-4 mt-8">
               <Link href="#booking-form">
-                <Button size="lg" className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white border-0 text-lg px-8 py-6 rounded-full font-bold">
+                <Button id="hero-booking-btn" size="lg" className="w-full sm:w-auto bg-blue-500 hover:bg-blue-600 text-white border-0 text-lg px-8 py-6 rounded-full font-bold">
                   Jadwalkan Penjemputan
                 </Button>
               </Link>
@@ -222,6 +222,7 @@ export default function LandingPage() {
                 {categories.map((category) => (
                   <Button
                     key={category}
+                    id={`category-tab-${category.toLowerCase().replace(/\s+/g, '-')}`}
                     onClick={() => setSelectedCategory(category)}
                     variant={selectedCategory === category ? "default" : "outline"}
                     className={`rounded-full px-6 ${selectedCategory === category ? 'bg-blue-600' : 'bg-white text-gray-600 hover:bg-gray-50 border-gray-200'}`}
@@ -233,6 +234,7 @@ export default function LandingPage() {
 
               <div className="relative group/scroll">
                 <Button
+                  id="scroll-layanan-left-btn"
                   variant="outline"
                   size="icon"
                   className="absolute left-0 top-1/2 -translate-y-1/2 z-10 -ml-4 h-12 w-12 rounded-full shadow-lg bg-white/90 hidden md:flex opacity-0 group-hover/scroll:opacity-100 transition-opacity"
@@ -279,7 +281,7 @@ export default function LandingPage() {
                               </div>
                             </div>
                           </div>
-                          <Button className="w-full group-hover:bg-blue-700">
+                          <Button id={`pesan-layanan-btn-${layanan.id}`} className="w-full group-hover:bg-blue-700">
                             Pesan Sekarang <ArrowRight className="ml-2 h-4 w-4" />
                           </Button>
                         </CardContent>
@@ -289,6 +291,7 @@ export default function LandingPage() {
                 </div>
 
                 <Button
+                  id="scroll-layanan-right-btn"
                   variant="outline"
                   size="icon"
                   className="absolute right-0 top-1/2 -translate-y-1/2 z-10 -mr-4 h-12 w-12 rounded-full shadow-lg bg-white/90 hidden md:flex opacity-0 group-hover/scroll:opacity-100 transition-opacity"
@@ -323,7 +326,7 @@ export default function LandingPage() {
           <p className="text-xl md:text-2xl text-blue-100 mb-10">Hubungi kami sekarang untuk layanan antar jemput. Biar kami yang urus cucian Anda.</p>
           <div className="flex justify-center gap-4">
             <Link href="https://wa.me/6281218582747" target="_blank">
-              <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 gap-2 text-lg px-8 py-6 shadow-xl hover:shadow-2xl transition-all">
+              <Button id="cta-whatsapp-btn" size="lg" className="bg-white text-blue-600 hover:bg-gray-100 gap-2 text-lg px-8 py-6 shadow-xl hover:shadow-2xl transition-all">
                 <Phone className="h-5 w-5" />
                 Chat WhatsApp
               </Button>

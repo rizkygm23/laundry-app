@@ -487,6 +487,7 @@ export default function CreateTransaksi() {
                           </h3>
                           {orderItems.length > 1 && (
                             <Button
+                              id={`remove-item-btn-${index}`}
                               type="button"
                               variant="ghost"
                               size="sm"
@@ -507,7 +508,7 @@ export default function CreateTransaksi() {
                               onValueChange={(value) => handleItemLayananChange(item.id, value)}
                               required
                             >
-                              <SelectTrigger className="mt-2 h-11 sm:h-10">
+                              <SelectTrigger id={`layanan-select-trigger-${index}`} className="mt-2 h-11 sm:h-10">
                                 <SelectValue placeholder="Pilih layanan..." />
                               </SelectTrigger>
                               <SelectContent>
@@ -526,6 +527,7 @@ export default function CreateTransaksi() {
                             <Label className="text-sm sm:text-base font-semibold">Jumlah *</Label>
                             <div className="mt-2 flex items-center gap-2">
                               <Input
+                                id={`jumlah-input-${index}`}
                                 type="number"
                                 min="1"
                                 value={item.jumlah}
@@ -538,6 +540,7 @@ export default function CreateTransaksi() {
                                 {[1, 2, 3, 4, 5].map((increment) => (
                                   <Button
                                     key={increment}
+                                    id={`increment-btn-${index}-${increment}`}
                                     type="button"
                                     variant="outline"
                                     size="sm"
@@ -601,14 +604,15 @@ export default function CreateTransaksi() {
                   })}
 
                   <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleAddItem}
-                    className="w-full border-dashed border-2 py-4 sm:py-6 text-blue-600 hover:text-blue-700 h-auto"
-                  >
-                    <PlusCircle className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-                    Tambah Layanan
-                  </Button>
+                                    id="tambah-layanan-item-btn"
+                                    type="button"
+                                    variant="outline"
+                                    onClick={handleAddItem}
+                                    className="w-full border-dashed border-2 py-4 sm:py-6 text-blue-600 hover:text-blue-700 h-auto"
+                                  >
+                                    <PlusCircle className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                                    Tambah Layanan
+                                  </Button>
                 </div>
 
                 {/* Membership Info & Points */}
@@ -802,6 +806,7 @@ export default function CreateTransaksi() {
 
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-3 sm:pt-4">
                 <Button
+                  id="transaksi-submit-btn"
                   type="submit"
                   className="flex-1 bg-blue-600 hover:bg-blue-700 text-white h-11 sm:h-12 text-base sm:text-lg"
                   disabled={!allItemsValid}
@@ -809,6 +814,7 @@ export default function CreateTransaksi() {
                   Buat Pesanan
                 </Button>
                 <Button
+                  id="transaksi-cancel-btn"
                   type="button"
                   variant="outline"
                   onClick={() => router.push('/dashboard')}

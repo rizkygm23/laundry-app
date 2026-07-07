@@ -285,7 +285,7 @@ export default function BookingForm({ layananList, preSelectedLayananId }: Booki
                                 onValueChange={(val) => setFormData({ ...formData, layanan_id: val })}
                                 required
                             >
-                                <SelectTrigger>
+                                <SelectTrigger id="layanan-select-trigger">
                                     <SelectValue placeholder="Pilih Layanan" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -386,7 +386,7 @@ export default function BookingForm({ layananList, preSelectedLayananId }: Booki
                         />
                     </div>
 
-                    <Button type="submit" className="w-full h-12 text-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed" disabled={loading || distance > 6}>
+                    <Button id="booking-submit-btn" type="submit" className="w-full h-12 text-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed" disabled={loading || distance > 6}>
                         {loading ? <Loader2 className="animate-spin mr-2" /> : 'Pesan Penjemputan'}
                     </Button>
                 </form>

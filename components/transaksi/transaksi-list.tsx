@@ -465,7 +465,7 @@ export default function TransaksiList({
         </TableHeader>
         <TableBody>
           {transaksiList.map((transaksi) => (
-            <TableRow key={transaksi.id} className="hover:bg-gray-50">
+            <TableRow key={transaksi.id} id={`transaksi-row-${transaksi.id}`} className="hover:bg-gray-50">
               <TableCell className="font-mono font-medium text-xs sm:text-sm">{transaksi.kode_struk}</TableCell>
               <TableCell className="text-xs sm:text-sm">{transaksi.nama_pelanggan}</TableCell>
               <TableCell className="hidden md:table-cell text-xs sm:text-sm">{transaksi.nama_layanan}</TableCell>
@@ -513,7 +513,7 @@ export default function TransaksiList({
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-7 w-7 sm:h-8 sm:w-8 p-0">
+                    <Button variant="ghost" id={`transaksi-menu-btn-${transaksi.id}`} className="h-7 w-7 sm:h-8 sm:w-8 p-0">
                       <MoreHorizontal className="h-3 w-3 sm:h-4 sm:w-4" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -596,6 +596,7 @@ export default function TransaksiList({
         return (
           <Card
             key={transaksi.id}
+            id={`transaksi-card-${transaksi.id}`}
             onClick={() => handleCardClick(transaksi)}
             className={cn(
               'cursor-pointer border border-gray-200 hover:border-blue-200 transition hover:shadow-md',
@@ -749,20 +750,21 @@ export default function TransaksiList({
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <Button variant="outline" onClick={() => handleNavigate(`/transaksi/${activeTransaksi.id}`)} className="h-11 sm:h-10 text-sm">
+                    <Button id="action-detail-btn" variant="outline" onClick={() => handleNavigate(`/transaksi/${activeTransaksi.id}`)} className="h-11 sm:h-10 text-sm">
                       <Eye className="mr-2 h-4 w-4" />
                       Lihat Detail
                     </Button>
-                    <Button variant="outline" onClick={() => handleNavigate(`/struk/${activeTransaksi.kode_struk}`)} className="h-11 sm:h-10 text-sm">
+                    <Button id="action-receipt-btn" variant="outline" onClick={() => handleNavigate(`/struk/${activeTransaksi.kode_struk}`)} className="h-11 sm:h-10 text-sm">
                       <Printer className="mr-2 h-4 w-4" />
                       Cetak Struk
                     </Button>
-                    <Button variant="outline" onClick={() => handleNavigate(`/qr/${activeTransaksi.kode_struk}`)} className="h-11 sm:h-10 text-sm">
+                    <Button id="action-qr-btn" variant="outline" onClick={() => handleNavigate(`/qr/${activeTransaksi.kode_struk}`)} className="h-11 sm:h-10 text-sm">
                       <QrCode className="mr-2 h-4 w-4" />
                       Lihat QR
                     </Button>
                     {activeTransaksi.status_pembayaran !== 'lunas' && (
                       <Button
+                        id="action-pay-btn"
                         variant="outline"
                         onClick={() => {
                           setSelectedTransaksiForPayment(activeTransaksi);
@@ -775,26 +777,26 @@ export default function TransaksiList({
                       </Button>
                     )}
                     {activeTransaksi.status_transaksi === 'penjemputan' && (
-                      <Button variant="outline" onClick={() => updateStatus(activeTransaksi.id, 'antrian')} className="h-11 sm:h-10 text-sm">
+                      <Button id="action-status-antrian-btn" variant="outline" onClick={() => updateStatus(activeTransaksi.id, 'antrian')} className="h-11 sm:h-10 text-sm">
                         Terima & Antrian
                       </Button>
                     )}
                     {activeTransaksi.status_transaksi === 'antrian' && (
-                      <Button variant="outline" onClick={() => updateStatus(activeTransaksi.id, 'proses')} className="h-11 sm:h-10 text-sm">
+                      <Button id="action-status-proses-btn" variant="outline" onClick={() => updateStatus(activeTransaksi.id, 'proses')} className="h-11 sm:h-10 text-sm">
                         Set Proses
                       </Button>
                     )}
                     {activeTransaksi.status_transaksi === 'proses' && (
-                      <Button variant="outline" onClick={() => updateStatus(activeTransaksi.id, 'selesai')} className="h-11 sm:h-10 text-sm">
+                      <Button id="action-status-selesai-btn" variant="outline" onClick={() => updateStatus(activeTransaksi.id, 'selesai')} className="h-11 sm:h-10 text-sm">
                         Set Selesai
                       </Button>
                     )}
                     {activeTransaksi.status_transaksi === 'selesai' && (
-                      <Button variant="outline" onClick={() => updateStatus(activeTransaksi.id, 'terkirim')} className="h-11 sm:h-10 text-sm">
+                      <Button id="action-status-terkirim-btn" variant="outline" onClick={() => updateStatus(activeTransaksi.id, 'terkirim')} className="h-11 sm:h-10 text-sm">
                         Set Terkirim
                       </Button>
                     )}
-                    <Button variant="destructive" onClick={handleDeleteFromModal} className="h-11 sm:h-10 text-sm">
+                    <Button id="action-delete-btn" variant="destructive" onClick={handleDeleteFromModal} className="h-11 sm:h-10 text-sm">
                       <Trash2 className="mr-2 h-4 w-4" />
                       Hapus Pesanan
                     </Button>

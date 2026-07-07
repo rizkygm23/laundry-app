@@ -98,6 +98,7 @@ export default function StatusPage({ params }: { params: { kode: string } }) {
         {/* Search Box if accessed directly or not found */}
         <div className="bg-white p-4 rounded-lg shadow-sm flex gap-2">
           <Input
+            id="status-search-input"
             placeholder="Masukkan Kode Pesanan (Contoh: OL2312230001)"
             defaultValue={params.kode}
             className="flex-1"
@@ -107,7 +108,7 @@ export default function StatusPage({ params }: { params: { kode: string } }) {
               }
             }}
           />
-          <Button onClick={(e) => {
+          <Button id="status-search-submit-btn" onClick={(e) => {
             const input = e.currentTarget.previousElementSibling as HTMLInputElement;
             router.push(`/status/${input.value}`);
           }}>

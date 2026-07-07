@@ -138,6 +138,7 @@ export default function RegisterPage() {
             </div>
 
             <Button
+              id="register-submit-btn"
               type="submit"
               className="w-full bg-blue-600 hover:bg-blue-700 text-white"
               disabled={loading}
@@ -155,7 +156,7 @@ export default function RegisterPage() {
 
           <div className="mt-4 text-center text-sm text-gray-600">
             Sudah punya akun?{' '}
-            <Link href="/login" className="text-blue-600 hover:underline font-medium">
+            <Link id="login-link" href="/login" className="text-blue-600 hover:underline font-medium">
               Login di sini
             </Link>
           </div>

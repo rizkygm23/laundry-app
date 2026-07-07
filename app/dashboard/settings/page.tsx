@@ -108,11 +108,11 @@ export default function SettingsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label>Latitude</Label>
-                            <Input value={outletLocation?.lat || ''} readOnly />
+                            <Input id="latitude" value={outletLocation?.lat || ''} readOnly />
                         </div>
                         <div className="space-y-2">
                             <Label>Longitude</Label>
-                            <Input value={outletLocation?.lng || ''} readOnly />
+                            <Input id="longitude" value={outletLocation?.lng || ''} readOnly />
                         </div>
                     </div>
 
@@ -126,7 +126,7 @@ export default function SettingsPage() {
                         />
                     </div>
 
-                    <Button onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
+                    <Button id="save-settings-btn" onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700">
                         {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                         Simpan Pengaturan
                     </Button>

@@ -309,6 +309,7 @@ export function PaymentModal({
                     Rp
                   </span>
                   <Input
+                    id="cash-paid-input"
                     type="text"
                     value={cashPaid}
                     onChange={handleCashPaidChange}
@@ -331,6 +332,7 @@ export function PaymentModal({
                   {[1000, 2000, 5000, 10000, 20000, 50000, 100000].map((amount) => (
                     <Button
                       key={amount}
+                      id={`denom-btn-${amount}`}
                       type="button"
                       variant="outline"
                       onClick={() => handleCashDenomination(amount)}
@@ -342,6 +344,7 @@ export function PaymentModal({
                   ))}
                 </div>
                 <Button
+                  id="reset-cash-btn"
                   type="button"
                   variant="outline"
                   onClick={() => setCashPaid('')}
@@ -398,7 +401,7 @@ export function PaymentModal({
                 value={paymentMethod || ''}
                 onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
               >
-                <SelectTrigger className="h-12 sm:h-14 text-base">
+                <SelectTrigger id="payment-method-select-trigger" className="h-12 sm:h-14 text-base">
                   <SelectValue placeholder="Pilih metode pembayaran" />
                 </SelectTrigger>
                 <SelectContent>
@@ -479,6 +482,7 @@ export function PaymentModal({
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3 pt-4 sm:pt-6">
             <Button
+              id="payment-cancel-btn"
               type="button"
               variant="outline"
               onClick={handleClose}
@@ -488,6 +492,7 @@ export function PaymentModal({
               Batal
             </Button>
             <Button
+              id="payment-submit-btn"
               type="button"
               onClick={handleSubmit}
               className={`flex-1 h-12 sm:h-14 text-base sm:text-lg font-bold shadow-lg ${paymentType === 'tunai' && !isChangeValid

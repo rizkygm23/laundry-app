@@ -26,7 +26,7 @@ export function MobileHeader() {
         <h1 className="text-xl font-bold text-blue-600">Necis Laundry</h1>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-10 w-10">
+            <Button id="mobile-profile-dropdown-trigger" variant="ghost" size="icon" className="h-10 w-10">
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="bg-blue-600 text-white text-sm">
                   {getUserInitials()}
@@ -46,7 +46,7 @@ export function MobileHeader() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={signOut} className="cursor-pointer text-red-600">
+            <DropdownMenuItem id="mobile-logout-btn" onClick={signOut} className="cursor-pointer text-red-600">
               <LogOut className="mr-2 h-4 w-4" />
               <span>Logout</span>
             </DropdownMenuItem>

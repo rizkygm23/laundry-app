@@ -518,7 +518,7 @@ export default function KeuanganPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-3">
                 <CardTitle className="text-base sm:text-lg">Pengeluaran</CardTitle>
-                <Button onClick={() => handleOpenDialog()} className="bg-blue-600 hover:bg-blue-700" size="sm">
+                <Button id="tambah-pengeluaran-btn-1" onClick={() => handleOpenDialog()} className="bg-blue-600 hover:bg-blue-700" size="sm">
                   <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                   <span className="text-xs sm:text-sm">Tambah</span>
                 </Button>
@@ -554,6 +554,7 @@ export default function KeuanganPage() {
                             <TableCell className="text-right p-2">
                               <div className="flex justify-end gap-1">
                                 <Button
+                                  id={`edit-pengeluaran-${p.id}`}
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleOpenDialog(p)}
@@ -562,6 +563,7 @@ export default function KeuanganPage() {
                                   <Edit className="h-3 w-3" />
                                 </Button>
                                 <Button
+                                  id={`delete-pengeluaran-${p.id}`}
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleDeletePengeluaran(p.id)}
@@ -618,7 +620,7 @@ export default function KeuanganPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-3">
                 <CardTitle className="text-base sm:text-lg">Pengeluaran</CardTitle>
-                <Button onClick={() => handleOpenDialog()} className="bg-blue-600 hover:bg-blue-700" size="sm">
+                <Button id="tambah-pengeluaran-btn-2" onClick={() => handleOpenDialog()} className="bg-blue-600 hover:bg-blue-700" size="sm">
                   <Plus className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                   <span className="text-xs sm:text-sm">Tambah</span>
                 </Button>
@@ -654,6 +656,7 @@ export default function KeuanganPage() {
                             <TableCell className="text-right p-2">
                               <div className="flex justify-end gap-1">
                                 <Button
+                                  id={`edit-pengeluaran-${p.id}`}
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleOpenDialog(p)}
@@ -662,6 +665,7 @@ export default function KeuanganPage() {
                                   <Edit className="h-3 w-3" />
                                 </Button>
                                 <Button
+                                  id={`delete-pengeluaran-${p.id}`}
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => handleDeletePengeluaran(p.id)}
@@ -697,7 +701,7 @@ export default function KeuanganPage() {
                   value={formData.kategori}
                   onValueChange={(value) => setFormData({ ...formData, kategori: value })}
                 >
-                  <SelectTrigger className="mt-2">
+                  <SelectTrigger id="kategori-select-trigger" className="mt-2">
                     <SelectValue placeholder="Pilih kategori" />
                   </SelectTrigger>
                   <SelectContent>
@@ -714,6 +718,7 @@ export default function KeuanganPage() {
               <div>
                 <Label>Deskripsi *</Label>
                 <Input
+                  id="deskripsi-input"
                   value={formData.deskripsi}
                   onChange={(e) => setFormData({ ...formData, deskripsi: e.target.value })}
                   placeholder="Masukkan deskripsi pengeluaran"
@@ -723,6 +728,7 @@ export default function KeuanganPage() {
               <div>
                 <Label>Jumlah (Rp) *</Label>
                 <Input
+                  id="jumlah-input"
                   type="number"
                   value={formData.jumlah}
                   onChange={(e) => setFormData({ ...formData, jumlah: e.target.value })}
@@ -733,6 +739,7 @@ export default function KeuanganPage() {
               <div>
                 <Label>Tanggal *</Label>
                 <Input
+                  id="tanggal-input"
                   type="date"
                   value={formData.tanggal}
                   onChange={(e) => setFormData({ ...formData, tanggal: e.target.value })}
@@ -740,10 +747,10 @@ export default function KeuanganPage() {
                 />
               </div>
               <div className="flex gap-3 pt-4">
-                <Button variant="outline" onClick={handleCloseDialog} className="flex-1">
+                <Button id="pengeluaran-cancel-btn" variant="outline" onClick={handleCloseDialog} className="flex-1">
                   Batal
                 </Button>
-                <Button onClick={handleSubmitPengeluaran} className="flex-1 bg-blue-600 hover:bg-blue-700">
+                <Button id="pengeluaran-submit-btn" onClick={handleSubmitPengeluaran} className="flex-1 bg-blue-600 hover:bg-blue-700">
                   {editingPengeluaran ? 'Simpan' : 'Tambah'}
                 </Button>
               </div>
